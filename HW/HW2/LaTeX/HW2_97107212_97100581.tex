@@ -1,0 +1,326 @@
+\documentclass[12pt]{article}
+\usepackage{graphicx,import}
+\usepackage[svgnames]{xcolor} 
+\usepackage{fancyhdr}
+\usepackage{subfig}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{cite}
+\usepackage[many]{tcolorbox}
+\usepackage{listings}
+\usepackage[a4paper, total={6in, 8in} , bottom = 25mm , top = 25mm, headheight = 1.25cm , includehead,includefoot,heightrounded ]{geometry}
+\usepackage{afterpage}
+\usepackage{amssymb}
+\usepackage{pdflscape}
+\usepackage{gensymb}
+\usepackage{textcomp}
+\usepackage{tikz,pgfplots}
+\usepackage{xecolor}
+\usepackage{rotating}
+\usepackage{pdfpages}
+\usepackage[T1]{fontenc}
+\usepackage{tikz}
+\usepackage[utf8]{inputenc}
+\usepackage{PTSerif} 
+\usepackage{seqsplit}
+\usepackage{fancyvrb}
+\usepackage{mips}
+\usepackage{multirow}
+\usepackage{hhline}
+\usepackage[edges]{forest}
+\usepackage{tabularx}
+
+\usepackage{listings}
+\usepackage{xcolor}
+
+\hypersetup{
+	colorlinks   = true, %Colours links instead of ugly boxes
+	urlcolor     = blue, %Colour for external hyperlinks
+	linkcolor    = blue, %Colour of internal links
+	citecolor   = red %Colour of citations
+}
+ 
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+ 
+\NewDocumentCommand{\codeword}{v}{
+\texttt{\textcolor{blue}{#1}}
+}
+\lstset{language=java,keywordstyle={\bfseries \color{blue}}}
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\normalsize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+
+
+
+\lstset{ %
+	language=[mips]Assembler,       % the language of the code
+	basicstyle=\footnotesize,       % the size of the fonts that are used for the code
+	numbers=left,                   % where to put the line-numbers
+	numberstyle=\tiny\color{gray},  % the style that is used for the line-numbers
+	stepnumber=1,                   % the step between two line-numbers. If it's 1, each line
+	% will be numbered
+	numbersep=5pt,                  % how far the line-numbers are from the code
+	backgroundcolor=\color{white},  % choose the background color. You must add \usepackage{color}
+	showspaces=false,               % show spaces adding particular underscores
+	showstringspaces=false,         % underline spaces within strings
+	showtabs=false,                 % show tabs within strings adding particular underscores
+	frame=single,                   % adds a frame around the code
+	rulecolor=\color{black},        % if not set, the frame-color may be changed on line-breaks within not-black text (e.g. commens (green here))
+	tabsize=4,                      % sets default tabsize to 2 spaces
+	breaklines=true,                % sets automatic line breaking
+	breakatwhitespace=false,        % sets if automatic breaks should only happen at whitespace
+	% also try caption instead of title
+	keywordstyle=\color{blue},          % keyword style
+	commentstyle=\color{dkgreen},       % comment style
+	stringstyle=\color{mauve},         % string literal style
+	escapeinside={\%*}{*)},            % if you want to add a comment within your code
+	morekeywords={*,...}               % if you want to add more keywords to the set
+}
+
+\setmainfont[ExternalLocation=fonts/]{EBGaramond-Regular.ttf}
+
+
+
+
+\newenvironment{changemargin}[2]{%
+\begin{list}{}{%
+\setlength{\topsep}{0pt}%
+\setlength{\leftmargin}{#1}%
+\setlength{\rightmargin}{#2}%
+\setlength{\listparindent}{\parindent}%
+\setlength{\itemindent}{\parindent}%
+\setlength{\parsep}{\parskip}%
+}%
+\item[]}{\end{list}}
+
+
+\definecolor{foldercolor}{RGB}{124,166,198}
+
+\tikzset{pics/folder/.style={code={%
+    \node[inner sep=0pt, minimum size=#1](-foldericon){};
+    \node[folder style, inner sep=0pt, minimum width=0.3*#1, minimum height=0.6*#1, above right, xshift=0.05*#1] at (-foldericon.west){};
+    \node[folder style, inner sep=0pt, minimum size=#1] at (-foldericon.center){};}
+    },
+    pics/folder/.default={20pt},
+    folder style/.style={draw=foldercolor!80!black,top color=foldercolor!40,bottom color=foldercolor}
+}
+
+\forestset{is file/.style={edge path'/.expanded={%
+        ([xshift=\forestregister{folder indent}]!u.parent anchor) |- (.child anchor)},
+        inner sep=1pt},
+    this folder size/.style={edge path'/.expanded={%
+        ([xshift=\forestregister{folder indent}]!u.parent anchor) |- (.child anchor) pic[solid]{folder=#1}}, inner xsep=0.6*#1},
+    folder tree indent/.style={before computing xy={l=#1}},
+    folder icons/.style={folder, this folder size=#1, folder tree indent=3*#1},
+    folder icons/.default={12pt},
+}
+
+\begin{document}
+
+
+%%% title pages
+\begin{titlepage}
+\begin{center}
+        
+\vspace*{0.7cm}
+
+\includegraphics[width=0.4\textwidth]{sharif1.png}\\
+\vspace{0.5cm}
+\textbf{ \Huge{Multicore Computing} }\\
+\vspace{0.5cm}
+\textbf{ \Large{ Assignment Two} }
+\vspace{0.2cm}
+       
+ 
+      \large \textbf{Department of Computer Engineering}\\\vspace{0.2cm}
+    \large   Sharif University of Technology\\\vspace{0.2cm}
+       \large   Spring 2022 \\\vspace{0.2cm}
+      \noindent\rule[1ex]{\linewidth}{1pt}
+Lecturer:\\
+    \textbf{{Dr. Falahati}}
+
+
+    \vspace{0.15cm}
+Name - Student Number:\\
+
+    \textbf{{Saba Hashemi - 97100581}}\\
+    
+    \textbf{{Amirmahdi Namjoo - 97107212}}
+\end{center}
+\end{titlepage}
+%%% title pages
+
+
+%%% header of pages
+\newpage
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot{}
+\cfoot{\thepage}
+\chead{ Amirmahdi Namjoo - Saba Hashemi}
+\rhead{\includegraphics[width=0.1\textwidth]{sharif.png}}
+\lhead{Assignment Two}
+%%% header of pages
+
+
+
+\section{Question One}
+
+\begin{itemize}
+	
+	\item Team member No.1: Saba Hashemi,97100581
+	\item Team member No.2: Amirmahdi Namjoo,97107212
+\end{itemize}
+
+
+\newpage
+
+\section{Question Two}
+
+
+
+\newpage
+
+\section{Question Three}
+
+
+
+\newpage
+
+
+\section{Question Four}
+
+
+
+\newpage
+
+
+\section{Question Five}
+
+\subsection{A}
+
+\begin{itemize}
+	\item 
+	Output of each run without optimization:
+	\begin{itemize}
+		\item \Verb+no_branch.out+
+		
+		\lstset{
+			basicstyle=\small\ttfamily,
+			columns=flexible,
+			breaklines=true
+		}
+\begin{lstlisting}
+titansarus@pop-os:~/Documents/multicore/hw2/q4/branch_q/A$ perf stat ./no_branch.out 
+2022-04-05T04:23:51+04:30
+Running ./no_branch.out
+Run on (16 X 4900 MHz CPU s)
+CPU Caches:
+L1 Data 48 KiB (x8)
+L1 Instruction 32 KiB (x8)
+L2 Unified 1280 KiB (x8)
+L3 Unified 24576 KiB (x1)
+Load Average: 0.70, 0.79, 0.81
+***WARNING*** CPU scaling is enabled, the benchmark real time measurements may be noisy and will incur extra overhead.
+--------------------------------------------------------------------------------------
+Benchmark                            Time             CPU   Iterations UserCounters...
+--------------------------------------------------------------------------------------
+BM_branch_pridicted/4194304    3838155 ns      3838061 ns          182 items_per_second=1092.82M/s
+
+Performance counter stats for './no_branch.out':
+
+1,630.64 msec task-clock:u              #    0.987 CPUs utilized          
+0      context-switches:u        #    0.000 /sec                   
+0      cpu-migrations:u          #    0.000 /sec                   
+65,695      page-faults:u             #   40.288 K/sec                  
+7,738,277,117      cycles:u                  #    4.746 GHz                    
+17,765,867,968      instructions:u            #    2.30  insn per cycle         
+1,880,566,625      branches:u                #    1.153 G/sec                  
+1,099,634      branch-misses:u           #    0.06% of all branches        
+38,683,269,655      slots:u                   #   23.723 G/sec                  
+18,355,590,699      topdown-retiring:u        #     47.5% retiring              
+758,495,483      topdown-bad-spec:u        #      2.0% bad speculation       
+1,820,389,160      topdown-fe-bound:u        #      4.7% frontend bound        
+17,748,794,312      topdown-be-bound:u        #     45.9% backend bound         
+
+1.651816356 seconds time elapsed
+
+1.575045000 seconds user
+0.056108000 seconds sys
+
+
+
+		
+	\end{lstlisting}
+
+	\begin{verbatim}
+		
+		
+	\end{verbatim}
+
+	\begin{verbatim}
+		content...
+	\end{verbatim}
+\end{itemize}
+\end{itemize}
+
+
+
+\subsection{B}
+
+
+
+
+\subsection{C}
+
+
+
+
+\subsection{D}
+
+
+
+
+\subsection{E}
+
+
+
+
+\subsection{F}
+
+
+
+
+
+\newpage
+
+
+
+\end{document}
+
+
+
