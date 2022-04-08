@@ -34,7 +34,9 @@
 \usepackage{url}
 \usepackage{listings}
 \usepackage{xcolor}
-
+\usepackage{pifont}
+\newcommand{\xmark}{\ding{55}}%
+\def\checkmark{\tikz\fill[scale=0.4](0,.35) -- (.25,0) -- (1,.7) -- (.25,.15) -- cycle;}
 
 \hypersetup{
 	colorlinks   = true, %Colours links instead of ugly boxes
@@ -233,8 +235,84 @@
 	\newpage
 	
 	\section{Question Three}
+	\begin{enumerate}[label=\alph*.]
+		\item 
+		The Illinois Protocol has four different states:
+\begin{itemize}
+	\item M: Modified
+	\item E: Exclusive
+	\item S: Shared
+	\item I: Invalid
+\end{itemize}
+
+For any pair of caches, the status of a given cache line can only have specific states depicted in the table below:
+
+		
+		
+	\begin{table}[H]
+		\centering
+		\begin{tabular}{|c||c|c|c|c|} 
+			\hline
+			& M                                     & E                                     & S                                     & I                                      \\ 
+			\hhline{|=::====|}
+			M & \textcolor{red}{\xmark}            & \textcolor{red}{\xmark}            & \textcolor{red}{\xmark}            & \textcolor[rgb]{0,0.722,0}{\checkmark}  \\ 
+			\hline
+			E & \textcolor{red}{\xmark}            & \textcolor{red}{\xmark}            & \textcolor{red}{\xmark}            & \textcolor[rgb]{0,0.722,0}{\checkmark}  \\ 
+			\hline
+			S & \textcolor{red}{\xmark}            & \textcolor{red}{\xmark}            & \textcolor[rgb]{0,0.722,0}{\checkmark} & \textcolor[rgb]{0,0.722,0}{\checkmark}  \\ 
+			\hline
+			I & \textcolor[rgb]{0,0.722,0}{\checkmark} & \textcolor[rgb]{0,0.722,0}{\checkmark} & \textcolor[rgb]{0,0.722,0}{\checkmark} & \textcolor[rgb]{0,0.722,0}{\checkmark}  \\
+			\hline
+		\end{tabular}
+	\end{table}
+
+
+So, in this case, the inconsistency is in Set 1 of Cache 2 and Cache 3 because they are simultaneously in exclusive and shared states. Set 1 of Cache 3 should be in the I state or Set 1 of Cache 2 should be in the S state.
+
+\item 
+
+\begin{enumerate}[label=B\arabic*.]
+	\item The inconsistency WILL NOT cause any problem in program execution.
+	
+	Reasoning: At first, we have a read from Set 1 of Cache 2. This set was in an inconsistent state, but this read doesn't cause any problems. Second, we have a write into the Cache 0, which is OK. After that, we have a write on the Set 1 of Cache 3. As it is a write, it causes this line to go into a Modified state, and because it was previously in a shared state, it will cause its counterpart, i.e., Set 1 of Cache 2, to go into an invalid state. So from now on, the whole system will be in a consistent state, and no problem will occur.
+	
+	Note that Set 1 of Cache 2 was previously in either E or S states based on the reasoning of the previous part, so a read from it does not lead to any problems because it is not invalid in either case.
+	
+	\item The inconsistency WILL cause some problems in program execution.
+	
+	Reasoning: The first instruction, which is a read on processor 3, could lead to problems. If the cosmic ray changed the state of Set 1 of Cache 3 from Invalid to Shared (which is a possibility based on part A), this read could mean reading from an actually invalid state. So the very first instruction could lead to problems.
+\end{enumerate}
+\item 
+This set of instructions can lead to the aforementioned state:
+
+\begin{verbatim}
+	1. Processor 1: ld 0x5FF00000
+	
+	2. Processor 3: st 0x5FF00000
+	
+	3. Processor 0: st 0x533333C0
+	
+	4. Processor 0: ld 0x5FFFFFC0
 	
 	
+\end{verbatim}
+
+
+Reasoning:
+
+\begin{enumerate}[label=\arabic*.]
+	\item As line \Verb+0x5FF00+ exists on Set 0 of Cache 3, This instruction cause Cache 1 to get this data. Therefore Set 0 of Cache 1 will now have Tag: \Verb+0x5FF000+ with state S. Also, Set 0 of Cache 3 will now have state S.
+	
+	\item This instruction changes the state of Set 0 of Cache 3 to M and also invalidates Set 0 of Cache 1.
+	
+	\item
+	As the line \Verb+0x533333+ already exists on Set 3 of Cache 1 and Set 3 of Cache 2, this instruction causes Set 3 of Cache 0 to load this data and get the tag \Verb+0x533333+ with state M and also invalidates both Set 3 of Cache 1 and set 3 of Cache 2.
+	
+	\item
+	This instruction makes Set 3 of Cache 0 evict its data and loads new data to Set 3 of Cache 3. This line will have tag \Verb+0x5FFFFF+ with state E.
+\end{enumerate}
+
+\end{enumerate}
 	
 	\newpage
 	
