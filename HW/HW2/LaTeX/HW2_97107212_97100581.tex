@@ -522,7 +522,7 @@ First, the MUL instruction is issued with its operands in reservation station 1 
 
 After that, the ADD instruction is issued in reservation station 1 of the addition unit called ADD1. Since one of its operands is not available yet, it is issued with the identifier of RS that provides its operand, MUL1. Notice the $Q_i$ field of register F3 is set to ADD1. (Figure \ref{fig:tom3})
 
-This is how the register renaming is performed. We have renamed F0 to MUL1, and ADD instruction is no longer waiting for F0 to become available. Instead, it will wait until the MUL1 result is available on CDB, thus eliminating name dependencies. (Figure \ref{fig:tom4})
+This is how the register renaming is performed. We have renamed F0 to MUL1, and ADD instruction is no longer waiting for F0 to become available. Instead, it will wait until the MUL1 result is available on CDB, thus eliminating name dependencies. 
 
 \begin{figure}[H]
 	\centering
@@ -532,7 +532,7 @@ This is how the register renaming is performed. We have renamed F0 to MUL1, and 
 \end{figure}
 
 
-Assume that next, the SUB instruction is issued with its operands in RS 2 of the addition unit, which we will call ADD2. The $Q_i$ field of F0 is now set to ADD2. This means that result of MUL instruction is never written to the register file.
+Assume that next, the SUB instruction is issued with its operands in RS 2 of the addition unit, which we will call ADD2. The $Q_i$ field of F0 is now set to ADD2. This means that result of MUL instruction is never written to the register file. (Figure \ref{fig:tom4})
 
 \begin{figure}[H]
 	\centering
@@ -569,6 +569,11 @@ out of order but to force them to commit in order and prevent any unwanted actio
 
 One other thing to notice in Tomasulo's Algorithm is that it uses a greedy algorithm to find an execution order of instructions.
 The algorithm will not use any subsequent dependence information in this greedy approach. But by using this information, such as dependency chain length, dependants count, slack time, etc., we can improve the algorithm to give us better order for instructions execution.
+
+\nocite{*}
+
+\bibliographystyle{plain}
+\bibliography{refs}
 
 
 % Resources:
