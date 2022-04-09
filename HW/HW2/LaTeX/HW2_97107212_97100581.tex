@@ -171,73 +171,174 @@
 \begin{document}
 	
 	
-	%%% title pages
-	\begin{titlepage}
-		\begin{center}
-			
-			\vspace*{0.7cm}
-			
-			\includegraphics[width=0.4\textwidth]{sharif1.png}\\
-			\vspace{0.5cm}
-			\textbf{ \Huge{Multicore Computing} }\\
-			\vspace{0.5cm}
-			\textbf{ \Large{ Assignment Two} }
-			\vspace{0.2cm}
-			
-			
-			\large \textbf{Department of Computer Engineering}\\\vspace{0.2cm}
-			\large   Sharif University of Technology\\\vspace{0.2cm}
-			\large   Spring 2022 \\\vspace{0.2cm}
-			\noindent\rule[1ex]{\linewidth}{1pt}
-			Lecturer:\\
-			\textbf{{Dr. Falahati}}
-			
-			
-			\vspace{0.15cm}
-			Name - Student Number:\\
-			
-			\textbf{{Saba Hashemi - 97100581}}\\
-			
-			\textbf{{Amirmahdi Namjoo - 97107212}}
-		\end{center}
-	\end{titlepage}
-	%%% title pages
-	
-	
-	%%% header of pages
-	\newpage
-	\pagestyle{fancy}
-	\fancyhf{}
-	\fancyfoot{}
-	\cfoot{\thepage}
-	\chead{ Amirmahdi Namjoo - Saba Hashemi}
-	\rhead{\includegraphics[width=0.1\textwidth]{sharif.png}}
-	\lhead{Assignment Two}
-	%%% header of pages
-	
-	
-	
-	\section{Question One}
-	
-	\begin{itemize}
+%%% title pages
+\begin{titlepage}
+	\begin{center}
 		
-		\item Team member No.1: Saba Hashemi,97100581
-		\item Team member No.2: Amirmahdi Namjoo,97107212
-	\end{itemize}
+		\vspace*{0.7cm}
+		
+		\includegraphics[width=0.4\textwidth]{sharif1.png}\\
+		\vspace{0.5cm}
+		\textbf{ \Huge{Multicore Computing} }\\
+		\vspace{0.5cm}
+		\textbf{ \Large{ Assignment Two} }
+		\vspace{0.2cm}
+		
+		
+		\large \textbf{Department of Computer Engineering}\\\vspace{0.2cm}
+		\large   Sharif University of Technology\\\vspace{0.2cm}
+		\large   Spring 2022 \\\vspace{0.2cm}
+		\noindent\rule[1ex]{\linewidth}{1pt}
+		Lecturer:\\
+		\textbf{{Dr. Falahati}}
+		
+		
+		\vspace{0.15cm}
+		Name - Student Number:\\
+		
+		\textbf{{Saba Hashemi - 97100581}}\\
+		
+		\textbf{{Amirmahdi Namjoo - 97107212}}
+	\end{center}
+\end{titlepage}
+%%% title pages
+
+
+%%% header of pages
+\newpage
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot{}
+\cfoot{\thepage}
+\chead{ Amirmahdi Namjoo - Saba Hashemi}
+\rhead{\includegraphics[width=0.1\textwidth]{sharif.png}}
+\lhead{Assignment Two}
+%%% header of pages
+
+
+
+\section{Question One}
+
+\begin{itemize}
 	
+	\item Team member No.1: Saba Hashemi,97100581
+	\item Team member No.2: Amirmahdi Namjoo,97107212
+\end{itemize}
+
+
+\newpage
+
+\section{Question Two}
+
+
+a. Offset bits: 6 lower bits of address since block size is 64 bytes
+
+Cache Sets associated with address in each instruction is as follows:
+
+\begin{itemize}
+\item instruction 0: 0x1ff40 = 0b0001,1111,1111,\textbf{01}00,0000 -> Set 0x01=1
+
+\item instruction 1: 0x110c0 -> Set 0x11=3
+
+\item instruction 2: 0x11080 -> Set 0x10=2
+
+\item instruction 3: 0x1ff00 -> Set 0x00=0
+
+\item instruction 4: 0x1ff40 -> Set 0x01=1
+
+\item instruction 5: 0x110f0 -> Set 0x11=3
+
+\end{itemize}
+
+In the following tables, the instructions and final tag store states that are related are shown with the same color: 
+
+% Please add the following required packages to your document preamble:
+% \usepackage[table,xcdraw]{xcolor}
+% If you use beamer only pass "xcolor=table" option, i.e. \documentclass[xcolor=table]{beamer}
+\begin{table}[H]
+ 	\centering
+	\begin{tabular}{|cc|c|cc|c|cc|}
+		\cline{1-2} \cline{4-5} \cline{7-8}
+		\multicolumn{2}{|c|}{\textbf{P0}}                               & \textbf{} & \multicolumn{2}{c|}{\textbf{P1}}                               & \textbf{} & \multicolumn{2}{c|}{\textbf{P2}}                               \\ \cline{1-2} \cline{4-5} \cline{7-8} 
+		\multicolumn{1}{|c|}{0} & {\color[HTML]{329A9D} st r0, 0x1ff40} &           & \multicolumn{1}{c|}{1} & {\color[HTML]{D729BE} st r0, 0x110c0} &           & \multicolumn{1}{c|}{4} & {\color[HTML]{329A9D} ld r0, 0x1ff40} \\ \cline{1-2} \cline{4-5} \cline{7-8} 
+		\multicolumn{1}{|c|}{}  &                                       &           & \multicolumn{1}{c|}{2} & {\color[HTML]{FF7A00} st r1, 0x11080} &           & \multicolumn{1}{c|}{5} & {\color[HTML]{D729BE} ld r1, 0x110f0} \\ \cline{1-2} \cline{4-5} \cline{7-8} 
+		\multicolumn{1}{|c|}{}  &                                       &           & \multicolumn{1}{c|}{3} & {\color[HTML]{6200C9} ld r2, 0x1ff00} &           & \multicolumn{1}{c|}{}  &                                       \\ \cline{1-2} \cline{4-5} \cline{7-8} 
+	\end{tabular}
+\end{table}
+
+\begin{table}[H]
+ 	\centering
+		\begin{tabular}{ccclccc}
+			\cline{1-3} \cline{5-7}
+			\multicolumn{3}{|c|}{\textbf{Cache for P0}}                                                                       & \multicolumn{1}{c|}{} & \multicolumn{3}{c|}{\textbf{Cache for P1}}                                                                       \\ \cline{1-3} \cline{5-7} 
+			\multicolumn{1}{|c|}{}      & \multicolumn{1}{c|}{Tag}                          & \multicolumn{1}{c|}{MESI state} & \multicolumn{1}{l|}{} & \multicolumn{1}{c|}{}      & \multicolumn{1}{c|}{Tag}                          & \multicolumn{1}{c|}{MESI state} \\ \cline{1-3} \cline{5-7} 
+			\multicolumn{1}{|c|}{Set 0} & \multicolumn{1}{c|}{{\color[HTML]{6200C9} 0x1ff}} & \multicolumn{1}{c|}{S}          & \multicolumn{1}{l|}{} & \multicolumn{1}{c|}{Set 0} & \multicolumn{1}{c|}{{\color[HTML]{6200C9} 0x1ff}} & \multicolumn{1}{c|}{S}          \\ \cline{1-3} \cline{5-7} 
+			\multicolumn{1}{|c|}{Set 1} & \multicolumn{1}{c|}{{\color[HTML]{329A9D} 0x1ff}} & \multicolumn{1}{c|}{S}          & \multicolumn{1}{l|}{} & \multicolumn{1}{c|}{Set 1} & \multicolumn{1}{c|}{{\color[HTML]{329A9D} 0x1ff}} & \multicolumn{1}{c|}{I}          \\ \cline{1-3} \cline{5-7} 
+			\multicolumn{1}{|c|}{Set 2} & \multicolumn{1}{c|}{{\color[HTML]{FF7A00} 0x110}} & \multicolumn{1}{c|}{I}          & \multicolumn{1}{l|}{} & \multicolumn{1}{c|}{Set 2} & \multicolumn{1}{c|}{{\color[HTML]{FF7A00} 0x110}} & \multicolumn{1}{c|}{M}          \\ \cline{1-3} \cline{5-7} 
+			\multicolumn{1}{|c|}{Set 3} & \multicolumn{1}{c|}{{\color[HTML]{D729BE} 0x110}} & \multicolumn{1}{c|}{I}          & \multicolumn{1}{l|}{} & \multicolumn{1}{c|}{Set 3} & \multicolumn{1}{c|}{{\color[HTML]{D729BE} 0x110}} & \multicolumn{1}{c|}{M}          \\ \cline{1-3} \cline{5-7} 
+			\multicolumn{1}{l}{}        & \multicolumn{1}{l}{}                              & \multicolumn{1}{l}{}            &                       & \multicolumn{1}{l}{}       & \multicolumn{1}{l}{}                              & \multicolumn{1}{l}{}            \\ \cline{1-3} \cline{5-7} 
+			\multicolumn{3}{|c|}{\textbf{Cache for P2}}                                                                       & \multicolumn{1}{c|}{} & \multicolumn{3}{c|}{\textbf{Cache for P3}}                                                                       \\ \cline{1-3} \cline{5-7} 
+			\multicolumn{1}{|c|}{}      & \multicolumn{1}{c|}{Tag}                          & \multicolumn{1}{c|}{MESI state} & \multicolumn{1}{l|}{} & \multicolumn{1}{c|}{}      & \multicolumn{1}{c|}{Tag}                          & \multicolumn{1}{c|}{MESI state} \\ \cline{1-3} \cline{5-7} 
+			\multicolumn{1}{|c|}{Set 0} & \multicolumn{1}{c|}{0x10f}                        & \multicolumn{1}{c|}{I}          & \multicolumn{1}{l|}{} & \multicolumn{1}{c|}{Set 0} & \multicolumn{1}{c|}{0x133}                        & \multicolumn{1}{c|}{E}          \\ \cline{1-3} \cline{5-7} 
+			\multicolumn{1}{|c|}{Set 1} & \multicolumn{1}{c|}{{\color[HTML]{329A9D} 0x1ff}} & \multicolumn{1}{c|}{S}          & \multicolumn{1}{l|}{} & \multicolumn{1}{c|}{Set 1} & \multicolumn{1}{c|}{0x000}                        & \multicolumn{1}{c|}{I}          \\ \cline{1-3} \cline{5-7} 
+			\multicolumn{1}{|c|}{Set 2} & \multicolumn{1}{c|}{0x10f}                        & \multicolumn{1}{c|}{M}          & \multicolumn{1}{l|}{} & \multicolumn{1}{c|}{Set 2} & \multicolumn{1}{c|}{0x000}                        & \multicolumn{1}{c|}{I}          \\ \cline{1-3} \cline{5-7} 
+			\multicolumn{1}{|c|}{Set 3} & \multicolumn{1}{c|}{{\color[HTML]{D729BE} 0x110}} & \multicolumn{1}{c|}{I}          & \multicolumn{1}{l|}{} & \multicolumn{1}{c|}{Set 3} & \multicolumn{1}{c|}{0x10f}                        & \multicolumn{1}{c|}{I}          \\ \cline{1-3} \cline{5-7} 
+		\end{tabular}
+	\end{table}
+
+Based on relations shown in the above tables, the initial tag store states could be as follows:
+
+
+\begin{table}[H]
+ 	\centering
+	\begin{tabular}{ccclccc}
+		\cline{1-3} \cline{5-7}
+		\multicolumn{3}{|c|}{\textbf{Cache for P0}}                                                & \multicolumn{1}{c|}{} & \multicolumn{3}{c|}{\textbf{Cache for P1}}                                                \\ \cline{1-3} \cline{5-7} 
+		\multicolumn{1}{|c|}{}      & \multicolumn{1}{c|}{Tag}   & \multicolumn{1}{c|}{MESI State} & \multicolumn{1}{l|}{} & \multicolumn{1}{c|}{}      & \multicolumn{1}{c|}{Tag}   & \multicolumn{1}{c|}{MESI State} \\ \cline{1-3} \cline{5-7} 
+		\multicolumn{1}{|c|}{Set 0} & \multicolumn{1}{c|}{0x1ff} & \multicolumn{1}{c|}{M, E, S}    & \multicolumn{1}{l|}{} & \multicolumn{1}{c|}{Set 0} & \multicolumn{1}{c|}{X}     & \multicolumn{1}{c|}{M, E, S, I} \\ \cline{1-3} \cline{5-7} 
+		\multicolumn{1}{|c|}{Set 1} & \multicolumn{1}{c|}{X}     & \multicolumn{1}{c|}{M, E, S, I} & \multicolumn{1}{l|}{} & \multicolumn{1}{c|}{Set 1} & \multicolumn{1}{c|}{0x1ff} & \multicolumn{1}{c|}{M, E, S, I} \\ \cline{1-3} \cline{5-7} 
+		\multicolumn{1}{|c|}{Set 2} & \multicolumn{1}{c|}{0x110} & \multicolumn{1}{c|}{M, E, S, I} & \multicolumn{1}{l|}{} & \multicolumn{1}{c|}{Set 2} & \multicolumn{1}{c|}{X}     & \multicolumn{1}{c|}{M, E, S, I} \\ \cline{1-3} \cline{5-7} 
+		\multicolumn{1}{|c|}{Set 3} & \multicolumn{1}{c|}{0x110} & \multicolumn{1}{c|}{M, E, S, I} & \multicolumn{1}{l|}{} & \multicolumn{1}{c|}{Set 3} & \multicolumn{1}{c|}{X}     & \multicolumn{1}{c|}{M, E, S, I} \\ \cline{1-3} \cline{5-7} 
+		\multicolumn{1}{l}{}        & \multicolumn{1}{l}{}       & \multicolumn{1}{l}{}            &                       & \multicolumn{1}{l}{}       & \multicolumn{1}{l}{}       & \multicolumn{1}{l}{}            \\ \cline{1-3} \cline{5-7} 
+		\multicolumn{3}{|c|}{\textbf{Cache for P2}}                                                & \multicolumn{1}{c|}{} & \multicolumn{3}{c|}{\textbf{Cache for P3}}                                                \\ \cline{1-3} \cline{5-7} 
+		\multicolumn{1}{|c|}{}      & \multicolumn{1}{c|}{Tag}   & \multicolumn{1}{c|}{MESI State} & \multicolumn{1}{l|}{} & \multicolumn{1}{c|}{}      & \multicolumn{1}{c|}{Tag}   & \multicolumn{1}{c|}{MESI State} \\ \cline{1-3} \cline{5-7} 
+		\multicolumn{1}{|c|}{Set 0} & \multicolumn{1}{c|}{0x10f} & \multicolumn{1}{c|}{I}          & \multicolumn{1}{l|}{} & \multicolumn{1}{c|}{Set 0} & \multicolumn{1}{c|}{0x133} & \multicolumn{1}{c|}{E}          \\ \cline{1-3} \cline{5-7} 
+		\multicolumn{1}{|c|}{Set 1} & \multicolumn{1}{c|}{X}     & \multicolumn{1}{c|}{M, E, S, I} & \multicolumn{1}{l|}{} & \multicolumn{1}{c|}{Set 1} & \multicolumn{1}{c|}{0x000} & \multicolumn{1}{c|}{I}          \\ \cline{1-3} \cline{5-7} 
+		\multicolumn{1}{|c|}{Set 2} & \multicolumn{1}{c|}{0x10f} & \multicolumn{1}{c|}{M}          & \multicolumn{1}{l|}{} & \multicolumn{1}{c|}{Set 2} & \multicolumn{1}{c|}{0x000} & \multicolumn{1}{c|}{I}          \\ \cline{1-3} \cline{5-7} 
+		\multicolumn{1}{|c|}{Set 3} & \multicolumn{1}{c|}{0x110} & \multicolumn{1}{c|}{M, E, S, I} & \multicolumn{1}{l|}{} & \multicolumn{1}{c|}{Set 3} & \multicolumn{1}{c|}{0x10f} & \multicolumn{1}{c|}{I}          \\ \cline{1-3} \cline{5-7} 
+	\end{tabular}
+\end{table}
+
+\begin{itemize}
+	\item The entries in black didn't change at all, so they are the same as the final tag store states.
 	
-	\newpage
+	\item The cache lines that didn't change by their processor instruction have the same tag as the final tag. But their states cannot be identified exactly. For example, in Set 0 of P0 cache, the previous state can be Shared, Modified, Or Exclusive, but not Invalid since it is in Shared state after a load instruction executes on P1. 
 	
-	\section{Question Two}
-	
-	
-	
-	\newpage
-	
-	\section{Question Three}
-	\begin{enumerate}[label=\alph*.]
-		\item 
-		The Illinois Protocol has four different states:
+	\item Other cache lines that are changed by their corresponding processor instruction can have any other tag value and state.
+\end{itemize}
+
+
+b. Instruction 0 must have been executed before instruction 4 since otherwise Set 1 of P2 could not be in Shared state and need to be in Invalid state.
+
+Similarly, instruction 5 must have been executed before instruction 1 since its state is Invalid, which means a write had happened after this load instruction.
+
+Based on these reasons and the instruction order in each processor the order will be as follows:
+
+
+ \begin{table}[H]
+ 	\centering
+ 	\begin{tabular}{|c|c|c|c|c|c|}
+ 		\hline
+ 		0 & 4 & 5  & 1 & 2 & 3  \\ \hline
+ 	\end{tabular}
+ \end{table}
+
+\newpage
+
+\section{Question Three}
+\begin{enumerate}[label=\alph*.]
+	\item 
+	The Illinois Protocol has four different states:
 \begin{itemize}
 	\item M: Modified
 	\item E: Exclusive
@@ -313,6 +414,8 @@ Reasoning:
 \end{enumerate}
 
 \end{enumerate}
+	
+	
 	
 \newpage
 
