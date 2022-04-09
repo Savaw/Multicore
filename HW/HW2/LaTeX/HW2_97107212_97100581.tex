@@ -458,6 +458,9 @@ The drawback of Tomasulo is its complexity. Also, CDB can be a single point of f
 Tomasulo can also be extended to support speculation. In order to do this, bypassing the result among instructions and the actual completion of an instruction need to be separated. This allows instructions to execute
 out of order but to force them to commit in order and prevent any unwanted action until an instruction commits.
 
+One other thing to notice in Tomasulo’s Algorithm is that it uses a greedy algorithm to find an execution order of instructions.
+In this greedy approach, the algorithm will not use any subsequent dependence information. But by using these information such as dependency chain length, dependants count, slack time, etc we can improve the algorithm so it can give us better order for instructions execution.
+
 
 % Resources:
 % Source book
@@ -465,7 +468,7 @@ out of order but to force them to commit in order and prevent any unwanted actio
 % Dynamic Scheduling Using Tomasulo's Algorithm Example https://www.youtube.com/watch?v=YH2fFu-35L8
 % Extending Tomasulo with Memory Accesses https://www.youtube.com/watch?v=eI-xrVbUId
 % Tomasulo's paper: An Efficient Algorithm for Exploiting Multiple Arithmetic Units
-
+% https://courses.cs.washington.edu/courses/cse548/02wi/files/pdf/final/Luna-and-Gang.pdf
 
 \newpage
 
