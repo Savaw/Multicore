@@ -314,77 +314,222 @@ Reasoning:
 
 \end{enumerate}
 	
-	\newpage
+\newpage
+
+\section{Question Four}
+Tomasulo's algorithm is a method of implementing dynamic scheduling that allows out-of-order execution. Robert Tomasulo invented this scheme at IBM in 1967.
+
+This algorithm minimizes RAW hazards by executing an instruction only when its operands are available. Also, WAR and WAW hazards, which arise from name dependencies, are avoided by "register renaming."
+
+In register renaming, all destination registers are renamed so that out-of-order write does not affect any instruction that depends on the earlier value of that register, thus eliminating WAR and WAW hazards.
+
+The compiler can also implement this renaming, but the major motivation to implement this in hardware was that there were only four floating-point registers in the initial IBM 360/91, so renaming in the compile stage wouldn't help that much. Also, implementing this in a compiler may need expensive analysis or hardware support because of the program's branches.
+
+First of all, to allow out-of-order execution, the ID pipe state needs to be split into two stages, names "Issue" and "Read operands." In the issue stage, instruction decodes and will be checked for structural hazards. In the read operands stage, we will wait until there are no data hazards and then read the instruction's operands.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\textwidth]{./images/tomas/tomas.png}	
+	\cprotect\caption{Basic structure of a FP unit using Tomasulo’s algorithm}
+\end{figure}
+
+
+As you can see in figure 1, in Tomasulo's algorithm, there is an "instruction queue," in which instructions are stored in FIFO order. We also have a "Reservation Stations" component in this architecture. A reservation station (RS) buffers the operands of fetched instructions waiting to issue, and it will fetches and buffer an operand as soon as it becomes available.
+
+Reservation stations are associated with functional units. As instructions are issued, the register specifiers for pending operands are renamed to the names of the RS, and each instruction identifies RSs which provide its inputs, so they won't need to read their operand from registers.
+In addition, results are passed to functional units directly from RSs, thus providing distributed hazard detection, execution control, and better performance since there is no need to read values directly from registers.
+
+Each RS has seven fields:
+
+\begin{itemize}
+	\item $Q_P$: Instruction's operation.
+	\item $Q_j, Q_k$: The number of RSs that will produce the operands. If operands are already available, the value will be zero.
+	\item $V_j, V_k$: The value of operands.
+	\item $A$: Value of immediate field or effective address.
+	\item $Busy$: Indicates if the RS is in use.
+\end{itemize}
+
+Also, each register has a $Q_i$ field which holds the identifier of RS that contains the operation whose result should be stored in this register. If there is no such operation, the value will be zero.
+
+Note that when successive writes to a register happen, only the last one is used to update the register value.
+
+In order to pass operands directly from RSs, Tomasulo scheme uses a "Common Data Bus" or "CDB," which allows all units waiting for an operand to be loaded simultaneously.
+
+We also have load and store buffers in this architucture that hold data or addresses coming from and going to memory and behave almost exactly like reservation stations.
+
+Load buffers have three functions:
+\begin{enumerate}
+	\item hold components of the effective address until it is computed
+	\item track outstanding loads that are waiting on the memory
+	\item hold the results of completed loads 
+\end{enumerate}
+
+Store buffers also have three functions:
+\begin{enumerate}
+	\item hold components of the effective address until it is computed
+	\item hold the destination memory addresses of outstanding stores that are waiting for the data	value to store
+	\item hold the address and value to store until the memory unit is available.
+\end{enumerate}
+
+
+Now we can explain the instruction lifecycle in Tomasulo's algorithm in three steps:
+
+\begin{enumerate}
+	\item Issue:
 	
+	Next instruction is fetched from the instruction queue. If there is any matching RS available, the instruction and its operands  (if available) are issued into that RS. If there is no empty RS, the instruction issue will be stalled.
+	If the instruction operands are not available, we store the identifier of RSs that will produce the operands. This step is renaming operands, eliminating WAR and WAW hazards.
 	
-	\section{Question Four}
+	\item Execute:
 	
+	The CDB is monitored until all operands are available. RAW hazards are avoided by delaying instruction execution until the operands are available. When all operands become available, the instruction can be executed at the corresponding functional unit.
 	
+	Loads and stores require a two-step execution process. In the first step, the effective address is computed. After that, loads can be executed as soon as the memory unit is available. Stores in the store buffer need to wait for the value to be stored before being sent to the memory unit.
 	
-	\newpage
+	\item Write result:
 	
+	Write result (and source) on CDB after finishing execution. This will result in the value being written in all registers and RSs waiting for this result.
 	
-	\section{Question Five}
+\end{enumerate}
+
+
+Example:
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.7\textwidth]{./images/tomas/e1.png}	
+	\cprotect\caption{stage 1}
+\end{figure}
+
+
+Assume following code:
+
+\begin{lstlisting}[style=CStyle]
+MUL F0, F1, F2
+ADD F3, F0, F2
+SUB F0, F1, F2
+\end{lstlisting}
+
+
+Initial state is shown in figure 2.
+
+First, the MUL instruction is issued with its operands in reservation station 1 of multiplication unit. We call this reservation station MUL1. Notice the $Q_i$ field of register F0 is set to MUL1.
+
+After that, the ADD instruction is issued in reservation station 1 of the addition unit called ADD1. Since one of its operands is not available yet, it is issued with the identifier of RS that provides its operand, MUL1. Notice the $Q_i$ field of register F3 is set to ADD1. (Figure 3)
+
+This is how register renaming is performed. We have renamed F0 to MUL1 and ADD instruction is no longer waiting for F0 to become available. Instead it will wait until MUL1 result is available on CDB, thus eliminating name dependencies. (Figure 4)
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\textwidth]{./images/tomas/e2.png}	
+	\cprotect\caption{stage 2}
+\end{figure}
+
+
+Assume that next the SUB instruction is issued with its operands in RS 2 of addition unit which we will call ADD2. The $Q_i$ field of F0 is now set to ADD2. This means that result of MUL instruction is never written to register file.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\textwidth]{./images/tomas/e3.png}	
+	\cprotect\caption{stage 3}
+\end{figure}
+
+
+Now any of MUL or SUB instruction can be executed. The state of RSs and registers after execution of these two instructions is shown in figure 5. 
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\textwidth]{./images/tomas/e4.png}	
+	\cprotect\caption{stage 4}
+\end{figure}
+
+
+Since MUL1 is executed, all operands of ADD instruction are ready and can also be executed. You can see the final state in figure 6.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\textwidth]{./images/tomas/e5.png}	
+	\cprotect\caption{stage 5}
+\end{figure}
+
+
+The drawback of Tomasulo is its complexity. Also, CDB can be a single point of failure. This issue can be avoided by using multiple CDBs.
+
+Tomasulo can also be extended to support speculation. In order to do this, bypassing the result among instructions and the actual completion of an instruction need to be separated. This allows instructions to execute
+out of order but to force them to commit in order and prevent any unwanted action until an instruction commits.
+
+
+% Resources:
+% Source book
+% Dynamic Scheduling Using Tomasulo's Algorithm https://www.youtube.com/watch?v=y-N0Dsc9LmU
+% Dynamic Scheduling Using Tomasulo's Algorithm Example https://www.youtube.com/watch?v=YH2fFu-35L8
+% Extending Tomasulo with Memory Accesses https://www.youtube.com/watch?v=eI-xrVbUId
+% Tomasulo's paper: An Efficient Algorithm for Exploiting Multiple Arithmetic Units
+
+
+\newpage
+
+\section{Question Five}
+
+All parts have been run on a machine with this configuration:
+
+\begin{itemize}
+	\item CPU Model: Intel Core i9 11980HK
+	\item Memory: 32GB DDR4 - 3200 MHz
+	\item Operating System: Pop! OS 21.10
+	\item Linux Kernel Version: 5.16.11
+\end{itemize}
+
+\subsection{A}
+
+
+\begin{itemize}
+	\item 
+	Only including important parts of coded needed for explanation:
+	\begin{lstlisting}[style=CStyle]
+		//no_branch.cpp
+		
+		...
+		a += p1[i];
+		...
+	\end{lstlisting}
 	
-	All parts have been run on a machine with this configuration:
-	
-	\begin{itemize}
-		\item CPU Model: Intel Core i9 11980HK
-		\item Memory: 32GB DDR4 - 3200 MHz
-		\item Operating System: Pop! OS 21.10
-		\item Linux Kernel Version: 5.16.11
-	\end{itemize}
-	
-	\subsection{A}
-	
-	
-	\begin{itemize}
-		\item 
-		Only including important parts of coded needed for explanation:
-		\begin{lstlisting}[style=CStyle]
-			//no_branch.cpp
-			
-			...
+	\begin{lstlisting}[style=CStyle]
+		//branch_with_true.cpp
+		
+		int true_giver(int _i){
+			return 1;
+		}
+		
+		if (true_giver(i)) {
 			a += p1[i];
-			...
-		\end{lstlisting}
-		
-		\begin{lstlisting}[style=CStyle]
-			//branch_with_true.cpp
-			
-			int true_giver(int _i){
-				return 1;
-			}
-			
-			if (true_giver(i)) {
-				a += p1[i];
-			} else {
-				a *= p2[i];
-			}
-		\end{lstlisting}
-		
-		\begin{lstlisting}[style=CStyle]
-			//real_branch.cpp
-			...
-			c[i] = rand() >= 0;
-			...
-			if (c_ptr[i]) {
-				a += p1[i];
-			} else {
-				a *= p2[i];
-			}
-			...
-		\end{lstlisting}
-		
-		As we can see, the \Verb+no_branch.cpp+ simply adds \codeword{p1[i]+} to the \codeword{a} variable. 
-		
-		The \Verb+branch_wit_true+ has an \codeword{if} statement, but because of \codeword{true_giver} function, only the first part of if which is \codeword{a+=p1[i]} gets executed. 
-		
-		For the \Verb+real_branch+, we have an if on \codeword{c_ptr[i]} but we can see that each element of \codeword{c}, which is the vector that \codeword{c_ptr} points to, has the value of \codeword{rand() >= 0}, and because \codeword{rand()}  always generates numbers in greater than or equal to $0$, the \codeword{if}'s condition will evaluate to true.
-		
-		\item
-		In the following pictures, you can see the output of \Verb+perf stat+ for of all files:
-		
+		} else {
+			a *= p2[i];
+		}
+	\end{lstlisting}
+	
+	\begin{lstlisting}[style=CStyle]
+		//real_branch.cpp
+		...
+		c[i] = rand() >= 0;
+		...
+		if (c_ptr[i]) {
+			a += p1[i];
+		} else {
+			a *= p2[i];
+		}
+		...
+	\end{lstlisting}
+	
+	As we can see, the \Verb+no_branch.cpp+ simply adds \codeword{p1[i]+} to the \codeword{a} variable. 
+	
+	The \Verb+branch_wit_true+ has an \codeword{if} statement, but because of \codeword{true_giver} function, only the first part of if which is \codeword{a+=p1[i]} gets executed. 
+	
+	For the \Verb+real_branch+, we have an if on \codeword{c_ptr[i]} but we can see that each element of \codeword{c}, which is the vector that \codeword{c_ptr} points to, has the value of \codeword{rand() >= 0}, and because \codeword{rand()}  always generates numbers in greater than or equal to $0$, the \codeword{if}'s condition will evaluate to true.
+	
+	\item
+	In the following pictures, you can see the output of \Verb+perf stat+ for of all files:
+	
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=0.8\textwidth]{./images/4A/no-branch.png}	
