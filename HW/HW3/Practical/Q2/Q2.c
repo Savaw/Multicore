@@ -5,10 +5,12 @@
 #include <time.h>
 #include <omp.h>
 
+#define NUMBER_OF_THREADS 16
+
 int main(int argc, char *argv[]) {
 
     struct timeval startTime, stopTime;
-    omp_set_num_threads(16);
+    omp_set_num_threads(NUMBER_OF_THREADS);
     int m;
     int n;
     double tol;
