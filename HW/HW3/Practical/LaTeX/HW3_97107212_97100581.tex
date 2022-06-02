@@ -236,31 +236,31 @@
 
 \begin{enumerate}[label=\alph*.]
 	\item 
-	The code is included in \Verb+Q2.c+.
+	The code is included in \Verb+Q3.c+.
 	
 	\item 
-	The results of running the code for different parameters are included in \Verb+results.xlsx+. Note that it has multiple sheets and the name of each sheet represents the parameters given to the program. The column with title 1 shows the results of running the unparalleled version of the code. All other columns represent the results of running the Parallelized version of the code with OpenMP.
+	The results of running the code for different parameters are included in \Verb+results3.xlsx+. Note that it has multiple sheets and the name of each sheet represents the parameters given to the program. The column with title 1 shows the results of running the unparalleled version of the code. All other columns represent the results of running the Parallelized version of the code with OpenMP.
 
 \item
 Plots for different input parameters:
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.5\textwidth]{./images/Q2/10100001.png}	
+	\includegraphics[width=0.5\textwidth]{./images/Q3/10100001.png}	
 	\cprotect\caption{Results of running the code with parameters $10$ $10$ $0.001$}
 	\label{fig:1}
 \end{figure}
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.5\textwidth]{./images/Q2/50500001.png}	
+	\includegraphics[width=0.5\textwidth]{./images/Q3/50500001.png}	
 	\cprotect\caption{Results of running the code with parameters $50$ $50$ $0.001$}
 	\label{fig:2}
 \end{figure}
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.5\textwidth]{./images/Q2/100100001.png}	
+	\includegraphics[width=0.5\textwidth]{./images/Q3/100100001.png}	
 	\cprotect\caption{Results of running the code with parameters $100$ $100$ $0.01$}
 	\label{fig:3}
 \end{figure}
@@ -268,28 +268,28 @@ Plots for different input parameters:
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.5\textwidth]{./images/Q2/1001000001.png}	
+	\includegraphics[width=0.5\textwidth]{./images/Q3/1001000001.png}	
 	\cprotect\caption{Results of running the code with parameters $100$ $100$ $0.001$}
 	\label{fig:4}
 \end{figure}
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.5\textwidth]{./images/Q2/2001000001.png}	
+	\includegraphics[width=0.5\textwidth]{./images/Q3/2001000001.png}	
 	\cprotect\caption{Results of running the code with parameters $200$ $100$ $0.001$}
 	\label{fig:5}
 \end{figure}
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.5\textwidth]{./images/Q2/2002000001.png}	
+	\includegraphics[width=0.5\textwidth]{./images/Q3/2002000001.png}	
 	\cprotect\caption{Results of running the code with parameters $200$ $200$ $0.001$}
 	\label{fig:6}
 \end{figure}
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.5\textwidth]{./images/Q2/500500001.png}	
+	\includegraphics[width=0.5\textwidth]{./images/Q3/500500001.png}	
 	\cprotect\caption{Results of running the code with parameters $500$ $500$ $0.01$}
 	\label{fig:7}
 \end{figure}
@@ -307,8 +307,39 @@ For larger inputs like $n=200, m=200$ (Figure \ref{fig:6}) and $n=500, m=500$ (F
  
 \end{enumerate}
 
+\newpage
+
 \section{Question Four}
 
+\begin{enumerate}[label=\alph*.]
+	
+	\item 
+		The code is included in \Verb+Q4.c+.
+	
+	\item 
+		The code is included in \Verb+Q4_Parallel.c+.
+		
+	\item 
+	You can find the raw results for runtime (in $\micro s$) in \Verb+results4.xlsx+. The plot is shown in Figure \ref{fig:8}. We run the the code for $N=8$ to $N=16$. After that, the amount of time needed to execute was very high, and it was not feasible to continue. We tested each case for thread counts of $1,4,8,16$. Note that the y-axis is shown in logarithmic scale (base $10$).
+	
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=0.5\textwidth]{./images/Q4/N-Queen.png}	
+		\cprotect\caption{Results of running the N-Queen code for $N=8$ to $N=16$ and thread counts of $1,4,8,16$}
+		\label{fig:8}
+	\end{figure}
+	
+	
+	\item 
+	Yes. We got a performance boost. We used \Verb+task+ construct in OpenMP. which actually puts the function specified in a queue so that each free thread picks up one task and executes it from the queue.
+
+	For the first cases like $N=8$, $N=9$, and $N=10$, the overhead of creating $16$ threads was too high, and it performed worse than the other cases; But for $N>11$, the $16$ threaded version performed better. 
+	
+	The linear shape of the plot on a logarithmic scale is also noteworthy. It shows that the growth rate of the running time is exponential.
+	
+	
+\end{enumerate}
 
 \newpage
 
