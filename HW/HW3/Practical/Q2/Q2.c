@@ -169,51 +169,64 @@ int main()
     /* write new image */
     WriteImage("replaced.bmp", pixels_top, width, height, bytesPerPixel);
 
-    int kernel_size = 5;
-    float a = -1.0 / 8;
-    float kernel[5][5] = {{0, 0, 0, 0, 0},
-                          {0, a, a, a, 0},
-                          {0, a, 2.0, a, 0},
-                          {0, a, a, a, 0},
-                          {0, 0, 0, 0, 0}};
+    int kernel_size = 3;
+    float a = -1.0 / 4;
+    float kernel[3][3] = {{a, a, a},
+                          {a, 3.0, a},
+                          {a, a, a}};
 
     printf("kernel %f\n", kernel[1][2]);
-    for (int i = 0; i < height; i++)
+    int extended_width = width + kernel_size;
+    int extended_height = height + kernel_size;
+
+    float *extended_pixels = (float *)malloc(extended_width * extended_height * sizeof(float));
+
+    for (int i = 0; i < extended_height; i++)
     {
-        for (int j = 0; j < width; j++)
+        for (int j = 0; j < extended_width; j++)
         {
-            int start = i * width + j;
+            for (int rgb = 0; rgb < 3; rgb++)
+            {
+                if (i < kernel_size / 2 || i > width + kernel_size / 2 || j < kernel_size / 2 || j > width + kernel_size / 2)
+                    extended_pixels[i * extended_width + j + rgb] = 0;
+                else
+                {
+                    int x = i - kernel_size / 2;
+                    int y = j - kernel_size / 2;
+                    extended_pixels[i * extended_width + j + rgb] = extended_pixels[x * width + y + rgb];
+                }
+            }
+        }
+    }
+
+    for (int i = kernel_size/2; i < height+kernel_size/2; i++)
+    {
+        for (int j = kernel_size/2; j < width+kernel_size/2; j++)
+        {
+            int start = i * extended_width + j;
             // printf("ij %d %d\n",i , j);
             for (int rgb = 0; rgb < 3; rgb++)
             {
                 float sum = 0;
-                // printf("--------\n");
                 for (int k = -kernel_size / 2; k <= kernel_size / 2; k++)
                     for (int p = -kernel_size / 2; p <= kernel_size / 2; p++)
                     {
-                        if (i + k < 0 || i + k >= height || p + j < 0 || p + j > width)
-                            continue;
-
                         int idx = (i + k) * width + (j + p);
                         // printf("compare %f %f\n",kernel[k + kernel_size / 2][p + kernel_size / 2], (float)pixels_top[idx * bytesPerPixel + rgb] );
-                        sum += kernel[k + kernel_size / 2][p + kernel_size / 2] * pixels_top[idx * bytesPerPixel + rgb];
+                        sum += kernel[k + kernel_size / 2][p + kernel_size / 2] * extended_pixels[idx * bytesPerPixel + rgb];
                     }
                 if (sum > 255)
                     sum = 255;
                 if (sum < 0)
                     sum = 0;
 
-                // printf(">>>> %d %d\n", (byte)pixels_top[start * bytesPerPixel + rgb], (byte)sum);
-                pixels_top[start * bytesPerPixel + rgb] = sum;
+                extended_pixels[start * bytesPerPixel + rgb] = sum;
             }
-            // pixels_top[start * bytesPerPixel] = pixels_bg[start * bytesPerPixel];
-            // pixels_top[start * bytesPerPixel + 1] = pixels_bg[start * bytesPerPixel + 1];
-            // pixels_top[start * bytesPerPixel + 2] = pixels_bg[start * bytesPerPixel + 2];
         }
     }
 
     /* write new image */
-    WriteImage("sharpened.bmp", pixels_top, width, height, bytesPerPixel);
+    WriteImage("sharpened.bmp", extended_pixels, extended_width, extended_height, bytesPerPixel);
 
     /* free everything */
     free(pixels_top);
