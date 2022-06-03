@@ -170,14 +170,12 @@ int main()
 
     int kernel_radius = 1;
     float a, b, c;
-    a = 2.5;
-    c = -1.0/4;
-    b = -1.0/8;
+    a = 3;
+    c = 0;
+    b = -1.0 / 2;
     float kernel[3][3] = {{c, b, c},
                           {b, a, b},
                           {c, b, c}};
-
-    // printf("kernel %f\n", kernel[1][2]);
 
     int extended_width = width + kernel_radius * 2;
     int extended_height = height + kernel_radius * 2;
@@ -196,14 +194,12 @@ int main()
                 if (i < 0 || i >= height || j < 0 || j >= width)
                     extended_pixels[idx + rgb] = 0;
                 else
-                {
                     extended_pixels[idx + rgb] = pixels_top[(i * width + j) * bytesPerPixel + rgb];
-                    // printf("%x %x\n", (byte)extended_pixels[idx + rgb], (byte)pixels_top[(x * width + y) * bytesPerPixel + rgb]);
-                }
             }
         }
-        // printf("\n");
     }
+
+    __m256 _kernel = _mm256_set_ps(b, b, b, b, a, 0, 0, 0);
 
     for (int i = 0; i < height; i++)
     {
@@ -211,33 +207,27 @@ int main()
         {
             int x = i + kernel_radius;
             int y = j + kernel_radius;
-            int start = x * extended_width + y;
             for (int rgb = 0; rgb < 3; rgb++)
             {
-                // printf("%x %x\n", (byte)extended_pixels[start * bytesPerPixel + rgb], (byte)pixels_top[(i * width + j) * bytesPerPixel + rgb]);
+                __m256 _square = _mm256_set_ps(
+                    extended_pixels[((x + 1) * extended_width + (y + 0)) * bytesPerPixel + rgb],
+                    extended_pixels[((x + -1) * extended_width + (y + 0)) * bytesPerPixel + rgb],
+                    extended_pixels[((x + 0) * extended_width + (y + -1)) * bytesPerPixel + rgb],
+                    extended_pixels[((x + 0) * extended_width + (y + 1)) * bytesPerPixel + rgb],
+                    extended_pixels[((x + 0) * extended_width + (y + 0)) * bytesPerPixel + rgb],
+                    0, 0, 0);
 
-                float sum = 0;
-                for (int k = -kernel_radius; k <= kernel_radius; k++)
-                    for (int p = -kernel_radius; p <= kernel_radius; p++)
-                    {
-                        int idx = (x + k) * extended_width + (y + p);
-                        // printf("compare %f %f\n",kernel[k + kernel_radius][p + kernel_radius], (float)extended_pixels[idx * bytesPerPixel + rgb] );
-                        sum += kernel[k + kernel_radius][p + kernel_radius] * extended_pixels[idx * bytesPerPixel + rgb];
-                        // printf("ok");
-                    }
-                if (sum > 255)
-                    sum = 255;
-                if (sum < 0)
-                    sum = 0;
+                _square = _mm256_dp_ps(_kernel, _square, 0xFF);
 
-                // if (extended_pixels[start * bytesPerPixel + rgb] > 0)
-                // printf("compare %f %f %f \n",(float)extended_pixels[start * bytesPerPixel + rgb], (float)sum, (float)pixels_top[x * width + y + rgb]);
-                pixels_top[(i * width + j) * bytesPerPixel + rgb] = (byte)sum;
+                float result = _square[0] + _square[4];
+                result = (result > 255) ? 255 : (result < 0) ? 0
+                                                             : result;
+
+                pixels_top[(i * width + j) * bytesPerPixel + rgb] = (byte)result;
             }
         }
     }
 
-    printf("done\n");
     /* write new image */
     WriteImage("sharpened.bmp", pixels_top, width, height, bytesPerPixel);
 
