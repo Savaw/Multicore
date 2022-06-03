@@ -741,6 +741,42 @@ Partitioning the memory mapping can be done in many ways. One of them is to assi
 \newpage
 
 \section{Question Four}
+\begin{enumerate}[label=\alph*.]
+	
+	\item 
+	Array Processor. An array processor will require 16 functional units that can do all different operations because they all need to do the same operation simultaneously. But the vector processor needs only one because it should do different jobs simultaneously, and each part of this functional unit can do the job assigned to them at the same time.
+	
+	\item 
+	
+	$$5 + (L-1) + 5 + (L-1) + 15 + (L-1) = 52 \Rightarrow$$ 
+	
+	$$VLEN = L = 10$$
+	
+	On an array processor, it will take $5+5+15=25$ cycles. There are data dependencies between operations, and one should end before the other one can begin.
+	
+	\item 
+	$$20 + 20 + (L -1)  + 5 + (L-1) + 1 + (L-1) + 20 + (L-1) = 94 \Rightarrow$$
+	$$VLEN = L = 8$$
+	
+	The two first Loads can actually be done in parallel. Therefore we will only have $L-1$ for them. The $L-1$ of the first one is actually interleaved in the second one.
+	
+	
+	
+	\item 
+	
+	
+	We assume the number of banks is a power of two.
+	
+	$$20 \times (\frac{16}{b}) + 20 \times (\frac{16}{b}) + (b-1) + 5 + (L-1) + 1 + (L-1) + 20 \times (\frac{16}{b}) + (b-1) = 170 \rightarrow$$
+	
+	$$b=8$$
+	
+	
+	The $b-1$ part is actually because if, for example, we have $8$ banks and data is of $VLEN = 16$, then at the first eight cycles, we can initiate loads of 8 of the data and then we must wait until the first one ends to initiate the next part. In this case, if we start at cycle 0, the whole load will end at $20 + 20 + 7=47$.
+	
+	
+\end{enumerate}
+
 
 \newpage
 
