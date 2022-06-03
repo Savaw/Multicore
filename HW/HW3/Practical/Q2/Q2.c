@@ -38,10 +38,9 @@ int main()
     /* we can now work with one size */
     int32 width = width_top, height = height_top, bytesPerPixel = bytesPerPixel_top;
 
-    __m256i _green_dist, _red_dist, _blue_dist, _temp1, _temp2, _one, _bg, _cmp;
+    __m256i _green_dist, _red_dist, _blue_dist, _cmp;
     __m256i _blend_red, _blend_green, _blend_blue;
     __m128i _blend_red_small, _blend_green_small, _blend_blue_small;
-    _one = _mm256_set1_epi16(255);
 
     /* These are used to seperate red, green, and blue pixels from RGB-vectors */
     __m128i seperate_red_idx_0 = _mm_set_epi8(-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 15, 12, 9, 6, 3, 0);  // RGBRGBRGBRGBRGBR to ----------RRRRRR
@@ -125,9 +124,9 @@ int main()
                 _mm_shuffle_epi8(chunk2_bg, seperate_green_idx_2)));
 
         /* Compare RGB in each pixel to decide whether it is green or not */
-        _green_dist = _mm256_adds_epi16(_one, _mm256_adds_epi16(red_top, blue_top));
-        _blue_dist = _mm256_adds_epi16(_one, _mm256_adds_epi16(red_top, green_top));
-        _red_dist = _mm256_adds_epi16(_one, _mm256_adds_epi16(green_top, blue_top));
+        _green_dist = _mm256_adds_epi16(red_top, blue_top);
+        _blue_dist = _mm256_adds_epi16(red_top, green_top);
+        _red_dist = _mm256_adds_epi16(green_top, blue_top);
 
         _cmp = _mm256_and_si256(_mm256_cmpgt_epi16(_red_dist, _green_dist), _mm256_cmpgt_epi16(_blue_dist, _green_dist));
 
@@ -169,67 +168,82 @@ int main()
     /* write new image */
     WriteImage("replaced.bmp", pixels_top, width, height, bytesPerPixel);
 
-    int kernel_size = 3;
-    float a = -1.0 / 4;
-    float kernel[3][3] = {{a, a, a},
-                          {a, 3.0, a},
-                          {a, a, a}};
+    int kernel_radius = 1;
+    float a, b, c;
+    a = 2.5;
+    c = -1.0/4;
+    b = -1.0/8;
+    float kernel[3][3] = {{c, b, c},
+                          {b, a, b},
+                          {c, b, c}};
 
-    printf("kernel %f\n", kernel[1][2]);
-    int extended_width = width + kernel_size;
-    int extended_height = height + kernel_size;
+    // printf("kernel %f\n", kernel[1][2]);
 
-    float *extended_pixels = (float *)malloc(extended_width * extended_height * sizeof(float));
+    int extended_width = width + kernel_radius * 2;
+    int extended_height = height + kernel_radius * 2;
 
-    for (int i = 0; i < extended_height; i++)
+    byte *extended_pixels = (byte *)malloc(extended_width * extended_height * bytesPerPixel * sizeof(byte));
+
+    for (int x = 0; x < extended_height; x++)
     {
-        for (int j = 0; j < extended_width; j++)
+        for (int y = 0; y < extended_width; y++)
         {
+            int i = x - kernel_radius;
+            int j = y - kernel_radius;
+            int idx = (i * extended_width + j) * bytesPerPixel;
             for (int rgb = 0; rgb < 3; rgb++)
             {
-                if (i < kernel_size / 2 || i > width + kernel_size / 2 || j < kernel_size / 2 || j > width + kernel_size / 2)
-                    extended_pixels[i * extended_width + j + rgb] = 0;
+                if (i < 0 || i >= height || j < 0 || j >= width)
+                    extended_pixels[idx + rgb] = 0;
                 else
                 {
-                    int x = i - kernel_size / 2;
-                    int y = j - kernel_size / 2;
-                    extended_pixels[i * extended_width + j + rgb] = extended_pixels[x * width + y + rgb];
+                    extended_pixels[idx + rgb] = pixels_top[(i * width + j) * bytesPerPixel + rgb];
+                    // printf("%x %x\n", (byte)extended_pixels[idx + rgb], (byte)pixels_top[(x * width + y) * bytesPerPixel + rgb]);
                 }
             }
         }
+        // printf("\n");
     }
 
-    for (int i = kernel_size/2; i < height+kernel_size/2; i++)
+    for (int i = 0; i < height; i++)
     {
-        for (int j = kernel_size/2; j < width+kernel_size/2; j++)
+        for (int j = 0; j < width; j++)
         {
-            int start = i * extended_width + j;
-            // printf("ij %d %d\n",i , j);
+            int x = i + kernel_radius;
+            int y = j + kernel_radius;
+            int start = x * extended_width + y;
             for (int rgb = 0; rgb < 3; rgb++)
             {
+                // printf("%x %x\n", (byte)extended_pixels[start * bytesPerPixel + rgb], (byte)pixels_top[(i * width + j) * bytesPerPixel + rgb]);
+
                 float sum = 0;
-                for (int k = -kernel_size / 2; k <= kernel_size / 2; k++)
-                    for (int p = -kernel_size / 2; p <= kernel_size / 2; p++)
+                for (int k = -kernel_radius; k <= kernel_radius; k++)
+                    for (int p = -kernel_radius; p <= kernel_radius; p++)
                     {
-                        int idx = (i + k) * width + (j + p);
-                        // printf("compare %f %f\n",kernel[k + kernel_size / 2][p + kernel_size / 2], (float)pixels_top[idx * bytesPerPixel + rgb] );
-                        sum += kernel[k + kernel_size / 2][p + kernel_size / 2] * extended_pixels[idx * bytesPerPixel + rgb];
+                        int idx = (x + k) * extended_width + (y + p);
+                        // printf("compare %f %f\n",kernel[k + kernel_radius][p + kernel_radius], (float)extended_pixels[idx * bytesPerPixel + rgb] );
+                        sum += kernel[k + kernel_radius][p + kernel_radius] * extended_pixels[idx * bytesPerPixel + rgb];
+                        // printf("ok");
                     }
                 if (sum > 255)
                     sum = 255;
                 if (sum < 0)
                     sum = 0;
 
-                extended_pixels[start * bytesPerPixel + rgb] = sum;
+                // if (extended_pixels[start * bytesPerPixel + rgb] > 0)
+                // printf("compare %f %f %f \n",(float)extended_pixels[start * bytesPerPixel + rgb], (float)sum, (float)pixels_top[x * width + y + rgb]);
+                pixels_top[(i * width + j) * bytesPerPixel + rgb] = (byte)sum;
             }
         }
     }
 
+    printf("done\n");
     /* write new image */
-    WriteImage("sharpened.bmp", extended_pixels, extended_width, extended_height, bytesPerPixel);
+    WriteImage("sharpened.bmp", pixels_top, width, height, bytesPerPixel);
 
     /* free everything */
     free(pixels_top);
     free(pixels_bg);
+    free(extended_pixels);
     return 0;
 }
