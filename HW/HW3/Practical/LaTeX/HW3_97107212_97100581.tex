@@ -169,223 +169,223 @@
 \begin{document}
 	
 	
-%%% title pages
-\begin{titlepage}
-	\begin{center}
-		
-		\vspace*{0.7cm}
-		
-		\includegraphics[width=0.4\textwidth]{sharif1.png}\\
-		\vspace{0.5cm}
-		\textbf{ \Huge{Multicore Computing} }\\
-		\vspace{0.5cm}
-		\textbf{ \Large{ Assignment Three (Practical)} }
-		\vspace{0.2cm}
-		
-		
-		\large \textbf{Department of Computer Engineering}\\\vspace{0.2cm}
-		\large   Sharif University of Technology\\\vspace{0.2cm}
-		\large   Spring 2022 \\\vspace{0.2cm}
-		\noindent\rule[1ex]{\linewidth}{1pt}
-		Lecturer:\\
-		\textbf{{Dr. Falahati}}
-		
-		
-		\vspace{0.15cm}
-		Name - Student Number:\\
-		
-		\textbf{{Saba Hashemi - 97100581}}\\
-		
-		\textbf{{Amirmahdi Namjoo - 97107212}}
-	\end{center}
-\end{titlepage}
-%%% title pages
-
-
-%%% header of pages
-\newpage
-\pagestyle{fancy}
-\fancyhf{}
-\fancyfoot{}
-\cfoot{\thepage}
-\chead{ Amirmahdi Namjoo - Saba Hashemi}
-\rhead{\includegraphics[width=0.1\textwidth]{sharif.png}}
-\lhead{Assignment Three}
-%%% header of pages
-
-
-
-\section{Question One}
-
-\begin{itemize}
+	%%% title pages
+	\begin{titlepage}
+		\begin{center}
+			
+			\vspace*{0.7cm}
+			
+			\includegraphics[width=0.4\textwidth]{sharif1.png}\\
+			\vspace{0.5cm}
+			\textbf{ \Huge{Multicore Computing} }\\
+			\vspace{0.5cm}
+			\textbf{ \Large{ Assignment Three (Practical)} }
+			\vspace{0.2cm}
+			
+			
+			\large \textbf{Department of Computer Engineering}\\\vspace{0.2cm}
+			\large   Sharif University of Technology\\\vspace{0.2cm}
+			\large   Spring 2022 \\\vspace{0.2cm}
+			\noindent\rule[1ex]{\linewidth}{1pt}
+			Lecturer:\\
+			\textbf{{Dr. Falahati}}
+			
+			
+			\vspace{0.15cm}
+			Name - Student Number:\\
+			
+			\textbf{{Saba Hashemi - 97100581}}\\
+			
+			\textbf{{Amirmahdi Namjoo - 97107212}}
+		\end{center}
+	\end{titlepage}
+	%%% title pages
 	
-	\item Team member No.1: Saba Hashemi, 97100581
-	\item Team member No.2: Amirmahdi Namjoo, 97107212
-\end{itemize}
-
-\newpage
-
-\section{Question Two}
-
-The code of both parts is included in \Verb+Q2.c+.
-
-a. In this part, we will separate pixels RGB bytes and store values of each color in separate vectors. In the beginning, 3*16 consecutive bytes are loaded into three 128-bit vectors as `char.` Then, we will use variables formatted as \codeword{seperate_*_idx_*} with the \codeword{_mm_shuffle_epi8} function to separate the colors of each vector, and after that, \codeword{_mm_or_si128} is used to gather all values of one color in one vector. This process is shown in \Verb+RGB-sepration.png+ located in \Verb+Q2+ directory.
-
-To check if the pixel is green, we need to add two 8 bits numbers. Because the result may be bigger than 255, we will convert 128-bit vectors into 256-vectors using \codeword{_mm256_cvtepu8_epi16} and treat each pixel value as 16 bits. Now we compare each pixel's red, blue, and green values and will have a mask of pixels that need to be replaced. Using this mask with \codeword{_mm256_blendv_epi8} function, we will blend foreground and background images. Then convert them back to a 128-bit vector, using a similar shuffle operation to the first part to put one pixel's colors back together, and store the result in the corresponding variable.
-
-You can see the resulting picture in the following image:
-
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=0.8\textwidth]{./images/Q2/replaced.bmp}	
-	\cprotect\caption{Replaced image}
-	\label{fig:2-1}
-\end{figure}
-
-b. For image sharpening, we used a kernel structured as follows:
-
-\begin{table}[ht!]
-	\centering
-\begin{tabular}{|c|c|c|}
-	\hline
-	0 & b & 0 \\ \hline
-	b & a & b \\ \hline
-	0 & b & 0 \\ \hline
-\end{tabular}
-\end{table}
-
-Sum of all kernel values needs to be one. Here we used values of 3 for \codeword{a} and -1/2 for \codeword{b}.
-First, we pad the image to avoid conditional branches in our main loop. Then, we store the kernel in a 256-vector of eight floating-point. At each position of the image, we use \codeword{_mm256_dp_ps} which performs dot product to simultaneously multiply all kernel entries in the image entries and get the sum, thus getting rid of a loop over kernel entries.
-
-The result can be seen below:
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=0.8\textwidth]{./images/Q2/sharpened.bmp}	
-	\cprotect\caption{Sharpened image}
-	\label{fig:2-2}
-\end{figure}
-
-
-\newpage
-
-\section{Question Three}
-
-Note: All parts are run on Intel Core i9 11980HK with 8 physical cores and 16 logical cores. The results on 16 threads may vary (and show less performance) on systems that have less than 16 logical cores.
-
-\begin{enumerate}[label=\alph*.]
-	\item 
-	The code is included in \Verb+Q3.c+.
 	
-	\item 
-	The results of running the code for different parameters are included in \Verb+results3.xlsx+. Note that it has multiple sheets and the name of each sheet represents the parameters given to the program. The column with title 1 shows the results of running the unparalleled version of the code. All other columns represent the results of running the Parallelized version of the code with OpenMP.
-
-\item
-Plots for different input parameters:
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=0.5\textwidth]{./images/Q3/10100001.png}	
-	\cprotect\caption{Results of running the code with parameters $10$ $10$ $0.001$}
-	\label{fig:1}
-\end{figure}
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=0.5\textwidth]{./images/Q3/50500001.png}	
-	\cprotect\caption{Results of running the code with parameters $50$ $50$ $0.001$}
-	\label{fig:2}
-\end{figure}
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=0.5\textwidth]{./images/Q3/100100001.png}	
-	\cprotect\caption{Results of running the code with parameters $100$ $100$ $0.01$}
-	\label{fig:3}
-\end{figure}
-
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=0.5\textwidth]{./images/Q3/1001000001.png}	
-	\cprotect\caption{Results of running the code with parameters $100$ $100$ $0.001$}
-	\label{fig:4}
-\end{figure}
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=0.5\textwidth]{./images/Q3/2001000001.png}	
-	\cprotect\caption{Results of running the code with parameters $200$ $100$ $0.001$}
-	\label{fig:5}
-\end{figure}
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=0.5\textwidth]{./images/Q3/2002000001.png}	
-	\cprotect\caption{Results of running the code with parameters $200$ $200$ $0.001$}
-	\label{fig:6}
-\end{figure}
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=0.5\textwidth]{./images/Q3/500500001.png}	
-	\cprotect\caption{Results of running the code with parameters $500$ $500$ $0.01$}
-	\label{fig:7}
-\end{figure}
-
-
-\item 
-With very small inputs like $n=10,m=10$ (Figure \ref{fig:1}), we see that the overhead of creating new threads is too high that it causes the parallelized code to perform worse than the serial code.
-
-For medium inputs like $n=50,m=50$ (Figure \ref{fig:2}), we see that at first, parallelization has a positive effect. Still, after increasing the number of threads from 8 to 16, the overhead of creating new threads overcomes the positive effects of parallelization.
-
-For $n=100, m=100$, we see an increase in performance by increasing the thread count. Notably, this improvement rate decreases after a while; it is evident in Figure \ref{fig:4}. Also, by comparing Figure \ref{fig:3} and Figure \ref{fig:4}, we can find out that decreasing the tolerance decreases the overall runtime of the program (as expected). This decrease in overall runtime causes the positive effect of parallelization in Figure \ref{fig:3} to pale compared to Figure \ref{fig:4}.
-
-For larger inputs like $n=200, m=200$ (Figure \ref{fig:6}) and $n=500, m=500$ (Figure \ref{fig:7}), we see similar results; i.e. The parallelization has a positive effect. Also, except for the last entry in Figure \ref{fig:6}, we see the rate of this improvement decreases by increasing the number of threads. The exception for the last entry of Figure \ref{fig:6} is maybe caused by $200\times200$ being divisible by $64$ and this divisibility by a large power of two caused the $16$ thread version to perform better on this case.
-
- 
-\end{enumerate}
-
-\newpage
-
-\section{Question Four}
-
-Note: All parts are run on Intel Core i9 11980HK with 8 physical cores and 16 logical cores. The results on 16 threads may vary (and show less performance) on systems that have less than 16 logical cores.
-
-\begin{enumerate}[label=\alph*.]
+	%%% header of pages
+	\newpage
+	\pagestyle{fancy}
+	\fancyhf{}
+	\fancyfoot{}
+	\cfoot{\thepage}
+	\chead{ Amirmahdi Namjoo - Saba Hashemi}
+	\rhead{\includegraphics[width=0.1\textwidth]{sharif.png}}
+	\lhead{Assignment Three}
+	%%% header of pages
 	
-	\item 
-		The code is included in \Verb+Q4.c+.
 	
-	\item 
-		The code is included in \Verb+Q4_Parallel.c+.
+	
+	\section{Question One}
+	
+	\begin{itemize}
 		
-	\item 
-	You can find the raw results for runtime (in $\micro s$) in \Verb+results4.xlsx+. The plot is shown in Figure \ref{fig:8}. We run the the code for $N=8$ to $N=16$. After that, the amount of time needed to execute was very high, and it was not feasible to continue. We tested each case for thread counts of $1,4,8,16$. Note that the y-axis is shown in logarithmic scale (base $10$).
+		\item Team member No.1: Saba Hashemi, 97100581
+		\item Team member No.2: Amirmahdi Namjoo, 97107212
+	\end{itemize}
+	
+	\newpage
+	
+	\section{Question Two}
+	
+	The code of both parts is included in \Verb+Q2.c+.
+	
+	a. In this part, we will separate pixels RGB bytes and store values of each color in separate vectors. In the beginning, 3*16 consecutive bytes are loaded into three 128-bit vectors as `char.` Then, we will use variables formatted as \codeword{seperate_*_idx_*} with the \codeword{_mm_shuffle_epi8} function to separate the colors of each vector. After that, \codeword{_mm_or_si128} is used to gather all values of one color in one vector. This process is shown in \Verb+RGB-sepration.png+ located in \Verb+Q2+ directory.
+	
+	To check if the pixel is green, we need to add two 8 bits numbers. Because the result may be more significant than 255, we will convert 128-bit vectors into 256-bit vectors using\\ \codeword{_mm256_cvtepu8_epi16} and treat each pixel value as 16 bits. Now we compare each pixel's red, blue, and green values and will have a mask of pixels that need to be replaced. Using this mask with \codeword{_mm256_blendv_epi8} function, we will blend foreground and background images. Then convert them back to a 128-bit vector, using a similar shuffle operation to the first part to put one pixel's colors back together, and store the result in the corresponding variable.
+	
+	You can see the resulting picture in the following image:
 	
 	
 	\begin{figure}[H]
 		\centering
-		\includegraphics[width=0.5\textwidth]{./images/Q4/N-Queen.png}	
-		\cprotect\caption{Results of running the N-Queen code for $N=8$ to $N=16$ and thread counts of $1,4,8,16$}
-		\label{fig:8}
+		\includegraphics[width=0.8\textwidth]{./images/Q2/replaced.bmp}	
+		\cprotect\caption{Replaced image}
+		\label{fig:2-1}
+	\end{figure}
+	
+	b. For image sharpening, we used a kernel structured as follows:
+	
+	\begin{table}[ht!]
+		\centering
+		\begin{tabular}{|c|c|c|}
+			\hline
+			0 & b & 0 \\ \hline
+			b & a & b \\ \hline
+			0 & b & 0 \\ \hline
+		\end{tabular}
+	\end{table}
+	
+	The sum of all kernel values needs to be one. Here we used values of 3 for \codeword{a} and -1/2 for \codeword{b}.
+	First, we pad the image to avoid conditional branches in our main loop. Then, we store the kernel in a 256-vector of eight floating-point. At each position of the image, we use \codeword{_mm256_dp_ps} which performs dot product to simultaneously multiply all kernel entries in the image entries and get the sum, thus getting rid of a loop over kernel entries.
+	
+	The result can be seen below:
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=0.8\textwidth]{./images/Q2/sharpened.bmp}	
+		\cprotect\caption{Sharpened image}
+		\label{fig:2-2}
 	\end{figure}
 	
 	
-	\item 
-	Yes. We got a performance boost. We used \Verb+task+ construct in OpenMP. which actually puts the function specified in a queue so that each free thread picks up one task and executes it from the queue.
-
-	For the first cases like $N=8$, $N=9$, and $N=10$, the overhead of creating $16$ threads was too high, and it performed worse than the other cases; But for $N>11$, the $16$ threaded version performed better. 
+	\newpage
 	
-	The linear shape of the plot on a logarithmic scale is also noteworthy. It shows that the growth rate of the running time is exponential.
+	\section{Question Three}
+	
+	Note: All parts are run on Intel Core i9 11980HK with 8 physical cores and 16 logical cores. The results on 16 threads may vary (and show less performance) on systems that have less than 16 logical cores.
+	
+	\begin{enumerate}[label=\alph*.]
+		\item 
+		The code is included in \Verb+Q3.c+.
+		
+		\item 
+		The results of running the code for different parameters are included in \Verb+results3.xlsx+. Note that it has multiple sheets and the name of each sheet represents the parameters given to the program. The column with title 1 shows the results of running the unparalleled version of the code. All other columns represent the results of running the Parallelized version of the code with OpenMP.
+		
+		\item
+		Plots for different input parameters:
+		
+		\begin{figure}[H]
+			\centering
+			\includegraphics[width=0.5\textwidth]{./images/Q3/10100001.png}	
+			\cprotect\caption{Results of running the code with parameters $10$ $10$ $0.001$}
+			\label{fig:1}
+		\end{figure}
+		
+		\begin{figure}[H]
+			\centering
+			\includegraphics[width=0.5\textwidth]{./images/Q3/50500001.png}	
+			\cprotect\caption{Results of running the code with parameters $50$ $50$ $0.001$}
+			\label{fig:2}
+		\end{figure}
+		
+		\begin{figure}[H]
+			\centering
+			\includegraphics[width=0.5\textwidth]{./images/Q3/100100001.png}	
+			\cprotect\caption{Results of running the code with parameters $100$ $100$ $0.01$}
+			\label{fig:3}
+		\end{figure}
+		
+		
+		\begin{figure}[H]
+			\centering
+			\includegraphics[width=0.5\textwidth]{./images/Q3/1001000001.png}	
+			\cprotect\caption{Results of running the code with parameters $100$ $100$ $0.001$}
+			\label{fig:4}
+		\end{figure}
+		
+		\begin{figure}[H]
+			\centering
+			\includegraphics[width=0.5\textwidth]{./images/Q3/2001000001.png}	
+			\cprotect\caption{Results of running the code with parameters $200$ $100$ $0.001$}
+			\label{fig:5}
+		\end{figure}
+		
+		\begin{figure}[H]
+			\centering
+			\includegraphics[width=0.5\textwidth]{./images/Q3/2002000001.png}	
+			\cprotect\caption{Results of running the code with parameters $200$ $200$ $0.001$}
+			\label{fig:6}
+		\end{figure}
+		
+		\begin{figure}[H]
+			\centering
+			\includegraphics[width=0.5\textwidth]{./images/Q3/500500001.png}	
+			\cprotect\caption{Results of running the code with parameters $500$ $500$ $0.01$}
+			\label{fig:7}
+		\end{figure}
+		
+		
+		\item 
+		With very small inputs like $n=10,m=10$ (Figure \ref{fig:1}), we see that the overhead of creating new threads is too high that it causes the parallelized code to perform worse than the serial code.
+		
+		For medium inputs like $n=50,m=50$ (Figure \ref{fig:2}), we see that at first, parallelization has a positive effect. Still, after increasing the number of threads from 8 to 16, the overhead of creating new threads overcomes the positive effects of parallelization.
+		
+		For $n=100, m=100$, we see an increase in performance by increasing the thread count. Notably, this improvement rate decreases after a while; it is evident in Figure \ref{fig:4}. Also, by comparing Figure \ref{fig:3} and Figure \ref{fig:4}, we can find out that decreasing the tolerance decreases the overall runtime of the program (as expected). This decrease in overall runtime causes the positive effect of parallelization in Figure \ref{fig:3} to pale compared to Figure \ref{fig:4}.
+		
+		For larger inputs like $n=200, m=200$ (Figure \ref{fig:6}) and $n=500, m=500$ (Figure \ref{fig:7}), we see similar results; i.e. The parallelization has a positive effect. Also, except for the last entry in Figure \ref{fig:6}, we see the rate of this improvement decreases by increasing the number of threads. The exception for the last entry of Figure \ref{fig:6} is maybe caused by $200\times200$ being divisible by $64$ and this divisibility by a large power of two caused the $16$ thread version to perform better on this case.
+		
+		
+	\end{enumerate}
+	
+	\newpage
+	
+	\section{Question Four}
+	
+	Note: All parts are run on Intel Core i9 11980HK with 8 physical cores and 16 logical cores. The results on 16 threads may vary (and show less performance) on systems that have less than 16 logical cores.
+	
+	\begin{enumerate}[label=\alph*.]
+		
+		\item 
+		The code is included in \Verb+Q4.c+.
+		
+		\item 
+		The code is included in \Verb+Q4_Parallel.c+.
+		
+		\item 
+		You can find the raw results for runtime (in $\micro s$) in \Verb+results4.xlsx+. The plot is shown in Figure \ref{fig:8}. We run the the code for $N=8$ to $N=16$. After that, the amount of time needed to execute was very high, and it was not feasible to continue. We tested each case for thread counts of $1,4,8,16$. Note that the y-axis is shown in logarithmic scale (base $10$).
+		
+		
+		\begin{figure}[H]
+			\centering
+			\includegraphics[width=0.5\textwidth]{./images/Q4/N-Queen.png}	
+			\cprotect\caption{Results of running the N-Queen code for $N=8$ to $N=16$ and thread counts of $1,4,8,16$}
+			\label{fig:8}
+		\end{figure}
+		
+		
+		\item 
+		Yes. We got a performance boost. We used \Verb+task+ construct in OpenMP. which actually puts the function specified in a queue so that each free thread picks up one task and executes it from the queue.
+		
+		For the first cases like $N=8$, $N=9$, and $N=10$, the overhead of creating $16$ threads was too high, and it performed worse than the other cases; But for $N>11$, the $16$ threaded version performed better. 
+		
+		The linear shape of the plot on a logarithmic scale is also noteworthy. It shows that the growth rate of the running time is exponential.
+		
+		
+	\end{enumerate}
+	
+	\newpage
 	
 	
-\end{enumerate}
-
-\newpage
-
-
 \end{document}
 
 
