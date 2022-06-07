@@ -133,8 +133,6 @@
 \setmainfont[ExternalLocation=fonts/]{EBGaramond-Regular.ttf}
 
 
-
-
 \newenvironment{changemargin}[2]{%
 	\begin{list}{}{%
 			\setlength{\topsep}{0pt}%
@@ -221,13 +219,53 @@
 
 \begin{itemize}
 	
-	\item Team member No.1: Saba Hashemi,97100581
-	\item Team member No.2: Amirmahdi Namjoo,97107212
+	\item Team member No.1: Saba Hashemi, 97100581
+	\item Team member No.2: Amirmahdi Namjoo, 97107212
 \end{itemize}
 
 \newpage
 
 \section{Question Two}
+
+The code of both parts is included in \Verb+Q2.c+.
+
+a. In this part, we will separate pixels RGB bytes and store values of each color in separate vectors. In the beginning, 3*16 consecutive bytes are loaded into three 128-bit vectors as `char.` Then, we will use variables formatted as \codeword{seperate_*_idx_*} with the \codeword{_mm_shuffle_epi8} function to separate the colors of each vector, and after that, \codeword{_mm_or_si128} is used to gather all values of one color in one vector. This process is shown in \Verb+RGB-sepration.png+ located in \Verb+Q2+ directory.
+
+To check if the pixel is green, we need to add two 8 bits numbers. Because the result may be bigger than 255, we will convert 128-bit vectors into 256-vectors using \codeword{_mm256_cvtepu8_epi16} and treat each pixel value as 16 bits. Now we compare each pixel's red, blue, and green values and will have a mask of pixels that need to be replaced. Using this mask with \codeword{_mm256_blendv_epi8} function, we will blend foreground and background images. Then convert them back to a 128-bit vector, using a similar shuffle operation to the first part to put one pixel's colors back together, and store the result in the corresponding variable.
+
+You can see the resulting picture in the following image:
+
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{./images/Q2/replaced.bmp}	
+	\cprotect\caption{Replaced image}
+	\label{fig:2-1}
+\end{figure}
+
+b. For image sharpening, we used a kernel structured as follows:
+
+\begin{table}[ht!]
+	\centering
+\begin{tabular}{|c|c|c|}
+	\hline
+	0 & b & 0 \\ \hline
+	b & a & b \\ \hline
+	0 & b & 0 \\ \hline
+\end{tabular}
+\end{table}
+
+Sum of all kernel values needs to be one. Here we used values of 3 for \codeword{a} and -1/2 for \codeword{b}.
+First, we pad the image to avoid conditional branches in our main loop. Then, we store the kernel in a 256-vector of eight floating-point. At each position of the image, we use \codeword{_mm256_dp_ps} which performs dot product to simultaneously multiply all kernel entries in the image entries and get the sum, thus getting rid of a loop over kernel entries.
+
+The result can be seen below:
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{./images/Q2/sharpened.bmp}	
+	\cprotect\caption{Sharpened image}
+	\label{fig:2-2}
+\end{figure}
 
 
 \newpage

@@ -26,6 +26,7 @@ int main()
     int32 width_top, width_bg;
     int32 height_top, height_bg;
     int32 bytesPerPixel_top, bytesPerPixel_bg;
+
     ReadImage("dino.bmp", &pixels_top, &width_top, &height_top, &bytesPerPixel_top);
     ReadImage("parking.bmp", &pixels_bg, &width_bg, &height_bg, &bytesPerPixel_bg);
 
