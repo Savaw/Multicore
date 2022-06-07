@@ -173,9 +173,9 @@ int main()
     a = 3;
     c = 0;
     b = -1.0 / 2;
-    float kernel[3][3] = {{c, b, c},
-                          {b, a, b},
-                          {c, b, c}};
+    // float kernel[3][3] = {{c, b, c},
+    //                       {b, a, b},
+    //                       {c, b, c}};
 
     int extended_width = width + kernel_radius * 2;
     int extended_height = height + kernel_radius * 2;
@@ -199,7 +199,7 @@ int main()
         }
     }
 
-    __m256 _kernel = _mm256_set_ps(b, b, b, b, a, 0, 0, 0);
+    const __m256 _kernel = _mm256_set_ps(b, b, b, b, a, 0, 0, 0);
 
     for (int i = 0; i < height; i++)
     {
