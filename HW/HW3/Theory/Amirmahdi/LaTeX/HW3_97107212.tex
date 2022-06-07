@@ -240,7 +240,23 @@
 
 \newpage
 
-\section{Question One}
+\section{Question Two}
+
+The PEFU architecture described on page 4 uses map and reduce patterns. Map pattern for the multiplication operations and parallel reduce for the summation phase.
+
+The Indexing described in figure 9 (page 5) is the pack pattern.
+
+Direct Indexing, described in figure 10 (page 5), is a combination of scan (because of intermediate results), map (because of the AND part), and pack (because of the selection of elements).
+
+Step indexing described in figure 11 (page 5) is also a combination of scan (because of intermediate results) and gather (because of index-based selection).
+
+The convolution described on page 6 (mapping part) is usually implemented using a stencil pattern (although not directly stated in the paper).
+
+The pooling layer on page 6 (mapping part) can be considered as a form of reduction. It is more like a tiled reduction because it partitions the matrix into separate grids and makes the reduction on each grid separately.
+
+
+
+
 
 \newpage
 
