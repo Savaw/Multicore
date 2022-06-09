@@ -238,6 +238,685 @@
 
 \section{Question One}
 
+The main idea is to apply a stencil. In the first step, we must rotate the kernel matrix horizontal and vertically to allow it to be efficiently applied as a convolution operator. After that, we apply it as a stencil on the main matrix. Note that for the out of boundary parts, we can zero extend the matrix or -in the code- use a branch-less logical operation to make it zero for out of boundary parts without actually using branch statements.
+
+After applying the stencil to each part, we reduce the two overlapping parts into a new number and put it into the respective slot in the result. Also, for the sake of simplicity and not being forced to deal with indices, I flattened the matrix into a 1-dimensional array and applied the reduce to it. By reduce I mean calculating $s = \sum_{i=0}^{n} a[i]\times b[i]$.
+If we want to be more specific, this operation is actually more like a map plus a reduce (i.e. $c[i] = a[i] \times b[i] \forall i; s = \sum_{i=0}^{n} c[i]$). Actually if we really want to use this on a parallel system, it is better to implement it as separate map and reduce (as I did).
+
+
+The main diagrams could be represented as follows:
+
+
+
+\begin{figure}[h]
+	\centering
+
+
+\tikzset{every picture/.style={line width=0.75pt}} %set default line width to 0.75pt        
+
+\begin{tikzpicture}[x=0.75pt,y=0.75pt,yscale=-1,xscale=1]
+	%uncomment if require: \path (0,477); %set diagram left start at 0, and has height of 477
+	
+	%Shape: Square [id:dp8247072338042931] 
+	\draw   (189,86) -- (211,86) -- (211,108) -- (189,108) -- cycle ;
+	%Shape: Square [id:dp9309233534389099] 
+	\draw   (211,86) -- (233,86) -- (233,108) -- (211,108) -- cycle ;
+	%Shape: Square [id:dp7279214296321239] 
+	\draw   (233,86) -- (255,86) -- (255,108) -- (233,108) -- cycle ;
+	%Shape: Square [id:dp7320930880444565] 
+	\draw   (233,108) -- (255,108) -- (255,130) -- (233,130) -- cycle ;
+	%Shape: Square [id:dp9705228774243122] 
+	\draw   (211,108) -- (233,108) -- (233,130) -- (211,130) -- cycle ;
+	%Shape: Square [id:dp49609592376209743] 
+	\draw   (189,108) -- (211,108) -- (211,130) -- (189,130) -- cycle ;
+	%Shape: Square [id:dp02163392444621448] 
+	\draw   (189,130) -- (211,130) -- (211,152) -- (189,152) -- cycle ;
+	%Shape: Square [id:dp8475150626607861] 
+	\draw   (211,130) -- (233,130) -- (233,152) -- (211,152) -- cycle ;
+	%Shape: Square [id:dp44004961002800913] 
+	\draw   (233,130) -- (255,130) -- (255,152) -- (233,152) -- cycle ;
+	
+	%Shape: Square [id:dp4579602273025223] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (167,64) -- (189,64) -- (189,86) -- (167,86) -- cycle ;
+	%Shape: Square [id:dp22204889372406944] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (189,64) -- (211,64) -- (211,86) -- (189,86) -- cycle ;
+	%Shape: Square [id:dp7826581623971554] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (211,64) -- (233,64) -- (233,86) -- (211,86) -- cycle ;
+	%Shape: Square [id:dp8384483038108743] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (211,86) -- (233,86) -- (233,108) -- (211,108) -- cycle ;
+	%Shape: Square [id:dp6927210910632859] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (189,86) -- (211,86) -- (211,108) -- (189,108) -- cycle ;
+	%Shape: Square [id:dp3846405770261383] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (167,86) -- (189,86) -- (189,108) -- (167,108) -- cycle ;
+	%Shape: Square [id:dp07175025413691105] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (167,108) -- (189,108) -- (189,130) -- (167,130) -- cycle ;
+	%Shape: Square [id:dp8653908584448029] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (189,108) -- (211,108) -- (211,130) -- (189,130) -- cycle ;
+	%Shape: Square [id:dp04978832761652896] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (211,108) -- (233,108) -- (233,130) -- (211,130) -- cycle ;
+	
+	%Shape: Square [id:dp6190099029786771] 
+	\draw   (291,86) -- (313,86) -- (313,108) -- (291,108) -- cycle ;
+	%Shape: Square [id:dp6137359005816989] 
+	\draw   (313,86) -- (335,86) -- (335,108) -- (313,108) -- cycle ;
+	%Shape: Square [id:dp8575999554615181] 
+	\draw   (335,86) -- (357,86) -- (357,108) -- (335,108) -- cycle ;
+	%Shape: Square [id:dp0227036789759405] 
+	\draw   (335,108) -- (357,108) -- (357,130) -- (335,130) -- cycle ;
+	%Shape: Square [id:dp5257597383390236] 
+	\draw   (313,108) -- (335,108) -- (335,130) -- (313,130) -- cycle ;
+	%Shape: Square [id:dp4373249917464248] 
+	\draw   (291,108) -- (313,108) -- (313,130) -- (291,130) -- cycle ;
+	%Shape: Square [id:dp7298069390097011] 
+	\draw   (291,130) -- (313,130) -- (313,152) -- (291,152) -- cycle ;
+	%Shape: Square [id:dp6590779412528691] 
+	\draw   (313,130) -- (335,130) -- (335,152) -- (313,152) -- cycle ;
+	%Shape: Square [id:dp7620466730886681] 
+	\draw   (335,130) -- (357,130) -- (357,152) -- (335,152) -- cycle ;
+	
+	%Shape: Square [id:dp37243296106406554] 
+	\draw   (392,86) -- (414,86) -- (414,108) -- (392,108) -- cycle ;
+	%Shape: Square [id:dp3239783454376819] 
+	\draw   (414,86) -- (436,86) -- (436,108) -- (414,108) -- cycle ;
+	%Shape: Square [id:dp6321487037703479] 
+	\draw   (436,86) -- (458,86) -- (458,108) -- (436,108) -- cycle ;
+	%Shape: Square [id:dp15337810870541002] 
+	\draw   (436,108) -- (458,108) -- (458,130) -- (436,130) -- cycle ;
+	%Shape: Square [id:dp9469844647581407] 
+	\draw   (414,108) -- (436,108) -- (436,130) -- (414,130) -- cycle ;
+	%Shape: Square [id:dp023489931215168847] 
+	\draw   (392,108) -- (414,108) -- (414,130) -- (392,130) -- cycle ;
+	%Shape: Square [id:dp08039937959173016] 
+	\draw   (392,130) -- (414,130) -- (414,152) -- (392,152) -- cycle ;
+	%Shape: Square [id:dp09283948192432323] 
+	\draw   (414,130) -- (436,130) -- (436,152) -- (414,152) -- cycle ;
+	%Shape: Square [id:dp4881018994590718] 
+	\draw   (436,130) -- (458,130) -- (458,152) -- (436,152) -- cycle ;
+	
+	%Shape: Square [id:dp10190801343332656] 
+	\draw   (186,188) -- (208,188) -- (208,210) -- (186,210) -- cycle ;
+	%Shape: Square [id:dp07430475840505935] 
+	\draw   (208,188) -- (230,188) -- (230,210) -- (208,210) -- cycle ;
+	%Shape: Square [id:dp8329752516854045] 
+	\draw   (230,188) -- (252,188) -- (252,210) -- (230,210) -- cycle ;
+	%Shape: Square [id:dp15072034330938533] 
+	\draw   (230,210) -- (252,210) -- (252,232) -- (230,232) -- cycle ;
+	%Shape: Square [id:dp34662993768235806] 
+	\draw   (208,210) -- (230,210) -- (230,232) -- (208,232) -- cycle ;
+	%Shape: Square [id:dp4661167904168302] 
+	\draw   (186,210) -- (208,210) -- (208,232) -- (186,232) -- cycle ;
+	%Shape: Square [id:dp9922175192881684] 
+	\draw   (186,232) -- (208,232) -- (208,254) -- (186,254) -- cycle ;
+	%Shape: Square [id:dp864409366672046] 
+	\draw   (208,232) -- (230,232) -- (230,254) -- (208,254) -- cycle ;
+	%Shape: Square [id:dp8259289191193735] 
+	\draw   (230,232) -- (252,232) -- (252,254) -- (230,254) -- cycle ;
+	
+	%Shape: Square [id:dp27593778198265384] 
+	\draw   (288,188) -- (310,188) -- (310,210) -- (288,210) -- cycle ;
+	%Shape: Square [id:dp28572672278353095] 
+	\draw   (310,188) -- (332,188) -- (332,210) -- (310,210) -- cycle ;
+	%Shape: Square [id:dp1243639068287532] 
+	\draw   (332,188) -- (354,188) -- (354,210) -- (332,210) -- cycle ;
+	%Shape: Square [id:dp59544370259009] 
+	\draw   (332,210) -- (354,210) -- (354,232) -- (332,232) -- cycle ;
+	%Shape: Square [id:dp8472773280805581] 
+	\draw   (310,210) -- (332,210) -- (332,232) -- (310,232) -- cycle ;
+	%Shape: Square [id:dp05678013619184541] 
+	\draw   (288,210) -- (310,210) -- (310,232) -- (288,232) -- cycle ;
+	%Shape: Square [id:dp2944919602263536] 
+	\draw   (288,232) -- (310,232) -- (310,254) -- (288,254) -- cycle ;
+	%Shape: Square [id:dp07504038087618814] 
+	\draw   (310,232) -- (332,232) -- (332,254) -- (310,254) -- cycle ;
+	%Shape: Square [id:dp6667131187486348] 
+	\draw   (332,232) -- (354,232) -- (354,254) -- (332,254) -- cycle ;
+	
+	%Shape: Square [id:dp9251837304175912] 
+	\draw   (389,188) -- (411,188) -- (411,210) -- (389,210) -- cycle ;
+	%Shape: Square [id:dp48267465331205606] 
+	\draw   (411,188) -- (433,188) -- (433,210) -- (411,210) -- cycle ;
+	%Shape: Square [id:dp4336413109177919] 
+	\draw   (433,188) -- (455,188) -- (455,210) -- (433,210) -- cycle ;
+	%Shape: Square [id:dp1506811613227026] 
+	\draw   (433,210) -- (455,210) -- (455,232) -- (433,232) -- cycle ;
+	%Shape: Square [id:dp5079438442347222] 
+	\draw   (411,210) -- (433,210) -- (433,232) -- (411,232) -- cycle ;
+	%Shape: Square [id:dp9364062897576633] 
+	\draw   (389,210) -- (411,210) -- (411,232) -- (389,232) -- cycle ;
+	%Shape: Square [id:dp04813318042314396] 
+	\draw   (389,232) -- (411,232) -- (411,254) -- (389,254) -- cycle ;
+	%Shape: Square [id:dp11420702880238554] 
+	\draw   (411,232) -- (433,232) -- (433,254) -- (411,254) -- cycle ;
+	%Shape: Square [id:dp12321985461586538] 
+	\draw   (433,232) -- (455,232) -- (455,254) -- (433,254) -- cycle ;
+	
+	%Shape: Square [id:dp33314546904300046] 
+	\draw   (185,287) -- (207,287) -- (207,309) -- (185,309) -- cycle ;
+	%Shape: Square [id:dp9793927367149777] 
+	\draw   (207,287) -- (229,287) -- (229,309) -- (207,309) -- cycle ;
+	%Shape: Square [id:dp41778370971580814] 
+	\draw   (229,287) -- (251,287) -- (251,309) -- (229,309) -- cycle ;
+	%Shape: Square [id:dp8388966650436647] 
+	\draw   (229,309) -- (251,309) -- (251,331) -- (229,331) -- cycle ;
+	%Shape: Square [id:dp714709048518239] 
+	\draw   (207,309) -- (229,309) -- (229,331) -- (207,331) -- cycle ;
+	%Shape: Square [id:dp5046843146047835] 
+	\draw   (185,309) -- (207,309) -- (207,331) -- (185,331) -- cycle ;
+	%Shape: Square [id:dp42656115953075346] 
+	\draw   (185,331) -- (207,331) -- (207,353) -- (185,353) -- cycle ;
+	%Shape: Square [id:dp9823793282205404] 
+	\draw   (207,331) -- (229,331) -- (229,353) -- (207,353) -- cycle ;
+	%Shape: Square [id:dp6078882281743858] 
+	\draw   (229,331) -- (251,331) -- (251,353) -- (229,353) -- cycle ;
+	
+	%Shape: Square [id:dp3165727525802218] 
+	\draw   (287,287) -- (309,287) -- (309,309) -- (287,309) -- cycle ;
+	%Shape: Square [id:dp8496496656695718] 
+	\draw   (309,287) -- (331,287) -- (331,309) -- (309,309) -- cycle ;
+	%Shape: Square [id:dp3130217607435899] 
+	\draw   (331,287) -- (353,287) -- (353,309) -- (331,309) -- cycle ;
+	%Shape: Square [id:dp9282775390953353] 
+	\draw   (331,309) -- (353,309) -- (353,331) -- (331,331) -- cycle ;
+	%Shape: Square [id:dp18275577727924475] 
+	\draw   (309,309) -- (331,309) -- (331,331) -- (309,331) -- cycle ;
+	%Shape: Square [id:dp7673600945187953] 
+	\draw   (287,309) -- (309,309) -- (309,331) -- (287,331) -- cycle ;
+	%Shape: Square [id:dp43625694750221045] 
+	\draw   (287,331) -- (309,331) -- (309,353) -- (287,353) -- cycle ;
+	%Shape: Square [id:dp7618600618264404] 
+	\draw   (309,331) -- (331,331) -- (331,353) -- (309,353) -- cycle ;
+	%Shape: Square [id:dp9823787621475124] 
+	\draw   (331,331) -- (353,331) -- (353,353) -- (331,353) -- cycle ;
+	
+	%Shape: Square [id:dp6292304178218331] 
+	\draw   (388,287) -- (410,287) -- (410,309) -- (388,309) -- cycle ;
+	%Shape: Square [id:dp33949753273593797] 
+	\draw   (410,287) -- (432,287) -- (432,309) -- (410,309) -- cycle ;
+	%Shape: Square [id:dp8448880401134842] 
+	\draw   (432,287) -- (454,287) -- (454,309) -- (432,309) -- cycle ;
+	%Shape: Square [id:dp9920944512604977] 
+	\draw   (432,309) -- (454,309) -- (454,331) -- (432,331) -- cycle ;
+	%Shape: Square [id:dp18498588116265458] 
+	\draw   (410,309) -- (432,309) -- (432,331) -- (410,331) -- cycle ;
+	%Shape: Square [id:dp5316138689912229] 
+	\draw   (388,309) -- (410,309) -- (410,331) -- (388,331) -- cycle ;
+	%Shape: Square [id:dp20685500824905034] 
+	\draw   (388,331) -- (410,331) -- (410,353) -- (388,353) -- cycle ;
+	%Shape: Square [id:dp1792935808295708] 
+	\draw   (410,331) -- (432,331) -- (432,353) -- (410,353) -- cycle ;
+	%Shape: Square [id:dp1659075261172438] 
+	\draw   (432,331) -- (454,331) -- (454,353) -- (432,353) -- cycle ;
+	
+	%Shape: Square [id:dp8893597481059361] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (291,65) -- (313,65) -- (313,87) -- (291,87) -- cycle ;
+	%Shape: Square [id:dp6330280247928741] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (313,65) -- (335,65) -- (335,87) -- (313,87) -- cycle ;
+	%Shape: Square [id:dp2859510223338302] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (335,65) -- (357,65) -- (357,87) -- (335,87) -- cycle ;
+	%Shape: Square [id:dp9875749460985213] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (335,87) -- (357,87) -- (357,109) -- (335,109) -- cycle ;
+	%Shape: Square [id:dp15810818858925146] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (313,87) -- (335,87) -- (335,109) -- (313,109) -- cycle ;
+	%Shape: Square [id:dp5735477537311748] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (291,87) -- (313,87) -- (313,109) -- (291,109) -- cycle ;
+	%Shape: Square [id:dp0033806238499329844] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (291,109) -- (313,109) -- (313,131) -- (291,131) -- cycle ;
+	%Shape: Square [id:dp5988731436773584] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (313,109) -- (335,109) -- (335,131) -- (313,131) -- cycle ;
+	%Shape: Square [id:dp3283048633489334] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (335,109) -- (357,109) -- (357,131) -- (335,131) -- cycle ;
+	
+	%Shape: Square [id:dp10571291036558272] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (415,65) -- (437,65) -- (437,87) -- (415,87) -- cycle ;
+	%Shape: Square [id:dp9313167761910941] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (437,65) -- (459,65) -- (459,87) -- (437,87) -- cycle ;
+	%Shape: Square [id:dp7841304828297815] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (459,65) -- (481,65) -- (481,87) -- (459,87) -- cycle ;
+	%Shape: Square [id:dp9461927213410222] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (459,87) -- (481,87) -- (481,109) -- (459,109) -- cycle ;
+	%Shape: Square [id:dp04552342795449804] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (437,87) -- (459,87) -- (459,109) -- (437,109) -- cycle ;
+	%Shape: Square [id:dp0014567346111742374] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (415,87) -- (437,87) -- (437,109) -- (415,109) -- cycle ;
+	%Shape: Square [id:dp8906323835115422] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (415,109) -- (437,109) -- (437,131) -- (415,131) -- cycle ;
+	%Shape: Square [id:dp7443515485259449] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (437,109) -- (459,109) -- (459,131) -- (437,131) -- cycle ;
+	%Shape: Square [id:dp5329928188579318] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (459,109) -- (481,109) -- (481,131) -- (459,131) -- cycle ;
+	
+	%Shape: Square [id:dp42084064796633047] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (166,188) -- (188,188) -- (188,210) -- (166,210) -- cycle ;
+	%Shape: Square [id:dp7417645456483957] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (188,188) -- (210,188) -- (210,210) -- (188,210) -- cycle ;
+	%Shape: Square [id:dp8357095735428106] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (210,188) -- (232,188) -- (232,210) -- (210,210) -- cycle ;
+	%Shape: Square [id:dp8810266897191579] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (210,210) -- (232,210) -- (232,232) -- (210,232) -- cycle ;
+	%Shape: Square [id:dp8661075726900318] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (188,210) -- (210,210) -- (210,232) -- (188,232) -- cycle ;
+	%Shape: Square [id:dp8950016317776555] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (166,210) -- (188,210) -- (188,232) -- (166,232) -- cycle ;
+	%Shape: Square [id:dp6459527751337588] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (166,232) -- (188,232) -- (188,254) -- (166,254) -- cycle ;
+	%Shape: Square [id:dp5301515795214942] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (188,232) -- (210,232) -- (210,254) -- (188,254) -- cycle ;
+	%Shape: Square [id:dp0962984833208762] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (210,232) -- (232,232) -- (232,254) -- (210,254) -- cycle ;
+	
+	%Shape: Square [id:dp5801882114435664] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (289,189) -- (311,189) -- (311,211) -- (289,211) -- cycle ;
+	%Shape: Square [id:dp6608117972986438] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (311,189) -- (333,189) -- (333,211) -- (311,211) -- cycle ;
+	%Shape: Square [id:dp9768337941424772] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (333,189) -- (355,189) -- (355,211) -- (333,211) -- cycle ;
+	%Shape: Square [id:dp5891394344704386] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (333,211) -- (355,211) -- (355,233) -- (333,233) -- cycle ;
+	%Shape: Square [id:dp028524091258962603] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (311,211) -- (333,211) -- (333,233) -- (311,233) -- cycle ;
+	%Shape: Square [id:dp13790091258440595] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (289,211) -- (311,211) -- (311,233) -- (289,233) -- cycle ;
+	%Shape: Square [id:dp06746962166927384] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (289,233) -- (311,233) -- (311,255) -- (289,255) -- cycle ;
+	%Shape: Square [id:dp2581878230271919] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (311,233) -- (333,233) -- (333,255) -- (311,255) -- cycle ;
+	%Shape: Square [id:dp3018812081228861] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (333,233) -- (355,233) -- (355,255) -- (333,255) -- cycle ;
+	
+	%Shape: Square [id:dp8283223864243754] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (411,187) -- (433,187) -- (433,209) -- (411,209) -- cycle ;
+	%Shape: Square [id:dp7381049268817788] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (433,187) -- (455,187) -- (455,209) -- (433,209) -- cycle ;
+	%Shape: Square [id:dp42414689269990924] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (455,187) -- (477,187) -- (477,209) -- (455,209) -- cycle ;
+	%Shape: Square [id:dp39121576597661445] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (455,209) -- (477,209) -- (477,231) -- (455,231) -- cycle ;
+	%Shape: Square [id:dp6426819172713356] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (433,209) -- (455,209) -- (455,231) -- (433,231) -- cycle ;
+	%Shape: Square [id:dp45922859999719723] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (411,209) -- (433,209) -- (433,231) -- (411,231) -- cycle ;
+	%Shape: Square [id:dp7485054053989335] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (411,231) -- (433,231) -- (433,253) -- (411,253) -- cycle ;
+	%Shape: Square [id:dp0667875833288829] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (433,231) -- (455,231) -- (455,253) -- (433,253) -- cycle ;
+	%Shape: Square [id:dp3067979663845357] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (455,231) -- (477,231) -- (477,253) -- (455,253) -- cycle ;
+	
+	%Shape: Square [id:dp925427127259687] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (163,309) -- (185,309) -- (185,331) -- (163,331) -- cycle ;
+	%Shape: Square [id:dp46299370091243164] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (185,309) -- (207,309) -- (207,331) -- (185,331) -- cycle ;
+	%Shape: Square [id:dp6026265621985281] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (207,309) -- (229,309) -- (229,331) -- (207,331) -- cycle ;
+	%Shape: Square [id:dp6613294210108733] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (207,331) -- (229,331) -- (229,353) -- (207,353) -- cycle ;
+	%Shape: Square [id:dp6641388652138152] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (185,331) -- (207,331) -- (207,353) -- (185,353) -- cycle ;
+	%Shape: Square [id:dp12932016063634277] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (163,331) -- (185,331) -- (185,353) -- (163,353) -- cycle ;
+	%Shape: Square [id:dp987285192882809] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (163,353) -- (185,353) -- (185,375) -- (163,375) -- cycle ;
+	%Shape: Square [id:dp5037068563235108] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (185,353) -- (207,353) -- (207,375) -- (185,375) -- cycle ;
+	%Shape: Square [id:dp7030814661144247] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (207,353) -- (229,353) -- (229,375) -- (207,375) -- cycle ;
+	
+	%Shape: Square [id:dp02693393384222964] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (288,309) -- (310,309) -- (310,331) -- (288,331) -- cycle ;
+	%Shape: Square [id:dp2053665648081069] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (310,309) -- (332,309) -- (332,331) -- (310,331) -- cycle ;
+	%Shape: Square [id:dp3381772511148897] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (332,309) -- (354,309) -- (354,331) -- (332,331) -- cycle ;
+	%Shape: Square [id:dp884458124833656] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (332,331) -- (354,331) -- (354,353) -- (332,353) -- cycle ;
+	%Shape: Square [id:dp8805584113962164] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (310,331) -- (332,331) -- (332,353) -- (310,353) -- cycle ;
+	%Shape: Square [id:dp03970861862357822] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (288,331) -- (310,331) -- (310,353) -- (288,353) -- cycle ;
+	%Shape: Square [id:dp4288395077710878] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (288,353) -- (310,353) -- (310,375) -- (288,375) -- cycle ;
+	%Shape: Square [id:dp7764822120790962] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (310,353) -- (332,353) -- (332,375) -- (310,375) -- cycle ;
+	%Shape: Square [id:dp18291586111098357] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (332,353) -- (354,353) -- (354,375) -- (332,375) -- cycle ;
+	
+	%Shape: Square [id:dp8700782416735275] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (409,309) -- (431,309) -- (431,331) -- (409,331) -- cycle ;
+	%Shape: Square [id:dp22786386033718764] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (431,309) -- (453,309) -- (453,331) -- (431,331) -- cycle ;
+	%Shape: Square [id:dp9847560045030965] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (453,309) -- (475,309) -- (475,331) -- (453,331) -- cycle ;
+	%Shape: Square [id:dp7470349638906335] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (453,331) -- (475,331) -- (475,353) -- (453,353) -- cycle ;
+	%Shape: Square [id:dp3486070754500423] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (431,331) -- (453,331) -- (453,353) -- (431,353) -- cycle ;
+	%Shape: Square [id:dp9542832459708701] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (409,331) -- (431,331) -- (431,353) -- (409,353) -- cycle ;
+	%Shape: Square [id:dp8251641384706148] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (409,353) -- (431,353) -- (431,375) -- (409,375) -- cycle ;
+	%Shape: Square [id:dp9582536007039049] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (431,353) -- (453,353) -- (453,375) -- (431,375) -- cycle ;
+	%Shape: Square [id:dp5917952885249149] 
+	\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (453,353) -- (475,353) -- (475,375) -- (453,375) -- cycle ;
+	
+	
+	
+	
+	
+\end{tikzpicture}
+
+\caption{Stencil pattern. The gray matrix is the flipped kernel applied over the main matrix—each time. The output of each stage will be used to fill the cell with the same index in the output matrix as the center cell of the kernel.}
+\end{figure}
+
+
+
+\begin{figure}[ht!]
+	\centering
+	
+	
+	
+	\tikzset{every picture/.style={line width=0.75pt}} %set default line width to 0.75pt        
+	
+	\begin{tikzpicture}[x=0.75pt,y=0.75pt,yscale=-1,xscale=1]
+		%uncomment if require: \path (0,477); %set diagram left start at 0, and has height of 477
+		
+		%Shape: Square [id:dp45350656623849206] 
+		\draw   (178,107) -- (201,107) -- (201,130) -- (178,130) -- cycle ;
+		%Shape: Square [id:dp03512816389334561] 
+		\draw   (201,107) -- (224,107) -- (224,130) -- (201,130) -- cycle ;
+		%Shape: Square [id:dp28369083463781863] 
+		\draw   (224,107) -- (247,107) -- (247,130) -- (224,130) -- cycle ;
+		%Shape: Square [id:dp013539464719855232] 
+		\draw   (247,107) -- (270,107) -- (270,130) -- (247,130) -- cycle ;
+		%Shape: Square [id:dp013486895992866232] 
+		\draw   (270,107) -- (293,107) -- (293,130) -- (270,130) -- cycle ;
+		%Shape: Square [id:dp46154444950563067] 
+		\draw   (293,107) -- (316,107) -- (316,130) -- (293,130) -- cycle ;
+		%Shape: Square [id:dp598808517737091] 
+		\draw   (316,107) -- (339,107) -- (339,130) -- (316,130) -- cycle ;
+		%Shape: Square [id:dp9499855173607059] 
+		\draw   (339,107) -- (362,107) -- (362,130) -- (339,130) -- cycle ;
+		%Shape: Square [id:dp7814394992121665] 
+		\draw   (362,107) -- (385,107) -- (385,130) -- (362,130) -- cycle ;
+		%Shape: Square [id:dp32144360684485207] 
+		\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (181,148) -- (204,148) -- (204,171) -- (181,171) -- cycle ;
+		%Shape: Square [id:dp9878215315338366] 
+		\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (204,148) -- (227,148) -- (227,171) -- (204,171) -- cycle ;
+		%Shape: Square [id:dp8123649674311035] 
+		\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (227,148) -- (250,148) -- (250,171) -- (227,171) -- cycle ;
+		%Shape: Square [id:dp3079162705263909] 
+		\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (250,148) -- (273,148) -- (273,171) -- (250,171) -- cycle ;
+		%Shape: Square [id:dp7909282413157346] 
+		\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (273,148) -- (296,148) -- (296,171) -- (273,171) -- cycle ;
+		%Shape: Square [id:dp22319732556344074] 
+		\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (296,148) -- (319,148) -- (319,171) -- (296,171) -- cycle ;
+		%Shape: Square [id:dp9319350537192075] 
+		\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (319,148) -- (342,148) -- (342,171) -- (319,171) -- cycle ;
+		%Shape: Square [id:dp5109924100256582] 
+		\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (342,148) -- (365,148) -- (365,171) -- (342,171) -- cycle ;
+		%Shape: Square [id:dp9177248097085442] 
+		\draw  [fill={rgb, 255:red, 156; green, 156; blue, 156 }  ,fill opacity=0.36 ] (365,148) -- (388,148) -- (388,171) -- (365,171) -- cycle ;
+		%Shape: Square [id:dp061802980412691166] 
+		\draw   (186,253) -- (209,253) -- (209,276) -- (186,276) -- cycle ;
+		%Shape: Square [id:dp16901826150503063] 
+		\draw   (209,253) -- (232,253) -- (232,276) -- (209,276) -- cycle ;
+		%Shape: Square [id:dp8444758638380965] 
+		\draw   (232,253) -- (255,253) -- (255,276) -- (232,276) -- cycle ;
+		%Shape: Square [id:dp6136024512782345] 
+		\draw   (255,253) -- (278,253) -- (278,276) -- (255,276) -- cycle ;
+		%Shape: Square [id:dp76195997288858] 
+		\draw   (278,253) -- (301,253) -- (301,276) -- (278,276) -- cycle ;
+		%Shape: Square [id:dp5862463452191482] 
+		\draw   (301,253) -- (324,253) -- (324,276) -- (301,276) -- cycle ;
+		%Shape: Square [id:dp8857376238528001] 
+		\draw   (324,253) -- (347,253) -- (347,276) -- (324,276) -- cycle ;
+		%Shape: Square [id:dp360860605161923] 
+		\draw   (347,253) -- (370,253) -- (370,276) -- (347,276) -- cycle ;
+		%Shape: Square [id:dp2786680429862378] 
+		\draw   (370,253) -- (393,253) -- (393,276) -- (370,276) -- cycle ;
+		%Straight Lines [id:da44451511752141815] 
+		\draw    (191,171.89) -- (191,199.89) ;
+		\draw [shift={(191,202.89)}, rotate = 270] [fill={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.08]  [draw opacity=0] (8.93,-4.29) -- (0,0) -- (8.93,4.29) -- cycle    ;
+		%Straight Lines [id:da3548182456220794] 
+		\draw    (176,120) -- (144,120) -- (143,211.89) -- (177,211.89) ;
+		\draw [shift={(180,211.89)}, rotate = 180] [fill={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.08]  [draw opacity=0] (8.93,-4.29) -- (0,0) -- (8.93,4.29) -- cycle    ;
+		%Straight Lines [id:da3461052689117672] 
+		\draw    (386,119.89) -- (421,119.89) -- (421,212.89) -- (393,213.79) ;
+		\draw [shift={(390,213.89)}, rotate = 358.15] [fill={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.08]  [draw opacity=0] (8.93,-4.29) -- (0,0) -- (8.93,4.29) -- cycle    ;
+		%Straight Lines [id:da269577760504486] 
+		\draw    (380,172) -- (379.1,199.89) ;
+		\draw [shift={(379,202.89)}, rotate = 271.85] [fill={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.08]  [draw opacity=0] (8.93,-4.29) -- (0,0) -- (8.93,4.29) -- cycle    ;
+		%Straight Lines [id:da21585283371975184] 
+		\draw    (193,226) -- (193.89,249.89) ;
+		\draw [shift={(194,252.89)}, rotate = 267.87] [fill={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.08]  [draw opacity=0] (8.93,-4.29) -- (0,0) -- (8.93,4.29) -- cycle    ;
+		%Straight Lines [id:da11610408605355205] 
+		\draw    (216,226) -- (216.89,249.89) ;
+		\draw [shift={(217,252.89)}, rotate = 267.87] [fill={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.08]  [draw opacity=0] (8.93,-4.29) -- (0,0) -- (8.93,4.29) -- cycle    ;
+		%Straight Lines [id:da3737437856037078] 
+		\draw    (241,226) -- (241.89,249.89) ;
+		\draw [shift={(242,252.89)}, rotate = 267.87] [fill={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.08]  [draw opacity=0] (8.93,-4.29) -- (0,0) -- (8.93,4.29) -- cycle    ;
+		%Straight Lines [id:da0038823471609106264] 
+		\draw    (264,227) -- (264.89,250.89) ;
+		\draw [shift={(265,253.89)}, rotate = 267.87] [fill={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.08]  [draw opacity=0] (8.93,-4.29) -- (0,0) -- (8.93,4.29) -- cycle    ;
+		%Straight Lines [id:da0977058930254453] 
+		\draw    (285,227) -- (285.89,250.89) ;
+		\draw [shift={(286,253.89)}, rotate = 267.87] [fill={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.08]  [draw opacity=0] (8.93,-4.29) -- (0,0) -- (8.93,4.29) -- cycle    ;
+		%Straight Lines [id:da9433768030022804] 
+		\draw    (309,227) -- (309.89,250.89) ;
+		\draw [shift={(310,253.89)}, rotate = 267.87] [fill={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.08]  [draw opacity=0] (8.93,-4.29) -- (0,0) -- (8.93,4.29) -- cycle    ;
+		%Straight Lines [id:da9823067136875181] 
+		\draw    (332,227) -- (332.89,250.89) ;
+		\draw [shift={(333,253.89)}, rotate = 267.87] [fill={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.08]  [draw opacity=0] (8.93,-4.29) -- (0,0) -- (8.93,4.29) -- cycle    ;
+		%Straight Lines [id:da2087810652316353] 
+		\draw    (356,228) -- (356.89,251.89) ;
+		\draw [shift={(357,254.89)}, rotate = 267.87] [fill={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.08]  [draw opacity=0] (8.93,-4.29) -- (0,0) -- (8.93,4.29) -- cycle    ;
+		%Straight Lines [id:da8927497230286727] 
+		\draw    (377,228) -- (377.89,251.89) ;
+		\draw [shift={(378,254.89)}, rotate = 267.87] [fill={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.08]  [draw opacity=0] (8.93,-4.29) -- (0,0) -- (8.93,4.29) -- cycle    ;
+		%Shape: Circle [id:dp5251770860855891] 
+		\draw   (205,213.5) .. controls (205,207.15) and (210.15,202) .. (216.5,202) .. controls (222.85,202) and (228,207.15) .. (228,213.5) .. controls (228,219.85) and (222.85,225) .. (216.5,225) .. controls (210.15,225) and (205,219.85) .. (205,213.5) -- cycle ;
+		%Shape: Circle [id:dp1709164137286754] 
+		\draw   (182,213.5) .. controls (182,207.15) and (187.15,202) .. (193.5,202) .. controls (199.85,202) and (205,207.15) .. (205,213.5) .. controls (205,219.85) and (199.85,225) .. (193.5,225) .. controls (187.15,225) and (182,219.85) .. (182,213.5) -- cycle ;
+		%Shape: Circle [id:dp1257678644058724] 
+		\draw   (228,213.5) .. controls (228,207.15) and (233.15,202) .. (239.5,202) .. controls (245.85,202) and (251,207.15) .. (251,213.5) .. controls (251,219.85) and (245.85,225) .. (239.5,225) .. controls (233.15,225) and (228,219.85) .. (228,213.5) -- cycle ;
+		%Shape: Circle [id:dp27304697357014307] 
+		\draw   (251,213.5) .. controls (251,207.15) and (256.15,202) .. (262.5,202) .. controls (268.85,202) and (274,207.15) .. (274,213.5) .. controls (274,219.85) and (268.85,225) .. (262.5,225) .. controls (256.15,225) and (251,219.85) .. (251,213.5) -- cycle ;
+		%Shape: Circle [id:dp23942102261898301] 
+		\draw   (274,213.5) .. controls (274,207.15) and (279.15,202) .. (285.5,202) .. controls (291.85,202) and (297,207.15) .. (297,213.5) .. controls (297,219.85) and (291.85,225) .. (285.5,225) .. controls (279.15,225) and (274,219.85) .. (274,213.5) -- cycle ;
+		%Shape: Circle [id:dp009758007373419808] 
+		\draw   (297,213.5) .. controls (297,207.15) and (302.15,202) .. (308.5,202) .. controls (314.85,202) and (320,207.15) .. (320,213.5) .. controls (320,219.85) and (314.85,225) .. (308.5,225) .. controls (302.15,225) and (297,219.85) .. (297,213.5) -- cycle ;
+		%Shape: Circle [id:dp28322672285720474] 
+		\draw   (320,213.5) .. controls (320,207.15) and (325.15,202) .. (331.5,202) .. controls (337.85,202) and (343,207.15) .. (343,213.5) .. controls (343,219.85) and (337.85,225) .. (331.5,225) .. controls (325.15,225) and (320,219.85) .. (320,213.5) -- cycle ;
+		%Shape: Circle [id:dp6842587935260296] 
+		\draw   (343,213.5) .. controls (343,207.15) and (348.15,202) .. (354.5,202) .. controls (360.85,202) and (366,207.15) .. (366,213.5) .. controls (366,219.85) and (360.85,225) .. (354.5,225) .. controls (348.15,225) and (343,219.85) .. (343,213.5) -- cycle ;
+		%Shape: Circle [id:dp2857332014315932] 
+		\draw   (366,213.5) .. controls (366,207.15) and (371.15,202) .. (377.5,202) .. controls (383.85,202) and (389,207.15) .. (389,213.5) .. controls (389,219.85) and (383.85,225) .. (377.5,225) .. controls (371.15,225) and (366,219.85) .. (366,213.5) -- cycle ;
+		%Shape: Circle [id:dp7216184126579841] 
+		\draw   (264,326) .. controls (264,312.19) and (275.19,301) .. (289,301) .. controls (302.81,301) and (314,312.19) .. (314,326) .. controls (314,339.81) and (302.81,351) .. (289,351) .. controls (275.19,351) and (264,339.81) .. (264,326) -- cycle ;
+		%Straight Lines [id:da914042160263314] 
+		\draw    (198,276) -- (261.61,324.19) ;
+		\draw [shift={(264,326)}, rotate = 217.15] [fill={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.08]  [draw opacity=0] (10.72,-5.15) -- (0,0) -- (10.72,5.15) -- (7.12,0) -- cycle    ;
+		%Straight Lines [id:da055923437110474206] 
+		\draw    (218,277.89) -- (263.62,313.06) ;
+		\draw [shift={(266,314.89)}, rotate = 217.63] [fill={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.08]  [draw opacity=0] (10.72,-5.15) -- (0,0) -- (10.72,5.15) -- (7.12,0) -- cycle    ;
+		%Straight Lines [id:da4223106673824044] 
+		\draw    (247,278) -- (269.23,308.47) ;
+		\draw [shift={(271,310.89)}, rotate = 233.88] [fill={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.08]  [draw opacity=0] (10.72,-5.15) -- (0,0) -- (10.72,5.15) -- (7.12,0) -- cycle    ;
+		%Straight Lines [id:da4388966858766954] 
+		\draw    (268,277) -- (275.2,303) ;
+		\draw [shift={(276,305.89)}, rotate = 254.52] [fill={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.08]  [draw opacity=0] (10.72,-5.15) -- (0,0) -- (10.72,5.15) -- (7.12,0) -- cycle    ;
+		%Straight Lines [id:da7519856794628692] 
+		\draw    (290,278) -- (289.13,298) ;
+		\draw [shift={(289,301)}, rotate = 272.49] [fill={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.08]  [draw opacity=0] (10.72,-5.15) -- (0,0) -- (10.72,5.15) -- (7.12,0) -- cycle    ;
+		%Straight Lines [id:da999542877978929] 
+		\draw    (313,277) -- (306.71,302.97) ;
+		\draw [shift={(306,305.89)}, rotate = 283.62] [fill={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.08]  [draw opacity=0] (10.72,-5.15) -- (0,0) -- (10.72,5.15) -- (7.12,0) -- cycle    ;
+		%Straight Lines [id:da2838897301015786] 
+		\draw    (334,277) -- (314.48,311.28) ;
+		\draw [shift={(313,313.89)}, rotate = 299.65] [fill={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.08]  [draw opacity=0] (10.72,-5.15) -- (0,0) -- (10.72,5.15) -- (7.12,0) -- cycle    ;
+		%Straight Lines [id:da9401279748941518] 
+		\draw    (361,277) -- (314.28,316.94) ;
+		\draw [shift={(312,318.89)}, rotate = 319.47] [fill={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.08]  [draw opacity=0] (10.72,-5.15) -- (0,0) -- (10.72,5.15) -- (7.12,0) -- cycle    ;
+		%Straight Lines [id:da34534814469993536] 
+		\draw    (383,279) -- (316.48,324.31) ;
+		\draw [shift={(314,326)}, rotate = 325.74] [fill={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.08]  [draw opacity=0] (10.72,-5.15) -- (0,0) -- (10.72,5.15) -- (7.12,0) -- cycle    ;
+		%Shape: Square [id:dp8878473402404183] 
+		\draw   (273,379.56) -- (302.44,379.56) -- (302.44,409) -- (273,409) -- cycle ;
+		%Straight Lines [id:da9241576425758498] 
+		\draw    (289,351) -- (288.11,375.56) ;
+		\draw [shift={(288,378.56)}, rotate = 272.08] [fill={rgb, 255:red, 0; green, 0; blue, 0 }  ][line width=0.08]  [draw opacity=0] (10.72,-5.15) -- (0,0) -- (10.72,5.15) -- (7.12,0) -- cycle    ;
+		
+		% Text Node
+		\draw (193.5,213.5) node   [align=left] {$\displaystyle \times $};
+		% Text Node
+		\draw (212,178) node [anchor=north west][inner sep=0.75pt]   [align=left] {$\displaystyle \cdots $};
+		% Text Node
+		\draw (250,179) node [anchor=north west][inner sep=0.75pt]   [align=left] {$\displaystyle \cdots $};
+		% Text Node
+		\draw (289,182) node [anchor=north west][inner sep=0.75pt]   [align=left] {$\displaystyle \cdots $};
+		% Text Node
+		\draw (332,181) node [anchor=north west][inner sep=0.75pt]   [align=left] {$\displaystyle \cdots $};
+		% Text Node
+		\draw (439,232) node [anchor=north west][inner sep=0.75pt]   [align=left] {Map};
+		% Text Node
+		\draw (216.5,213.5) node   [align=left] {$\displaystyle \times $};
+		% Text Node
+		\draw (239.5,213.5) node   [align=left] {$\displaystyle \times $};
+		% Text Node
+		\draw (262.5,213.5) node   [align=left] {$\displaystyle \times $};
+		% Text Node
+		\draw (285.5,213.5) node   [align=left] {$\displaystyle \times $};
+		% Text Node
+		\draw (308.5,213.5) node   [align=left] {$\displaystyle \times $};
+		% Text Node
+		\draw (331.5,213.5) node   [align=left] {$\displaystyle \times $};
+		% Text Node
+		\draw (354.5,213.5) node   [align=left] {$\displaystyle \times $};
+		% Text Node
+		\draw (377.5,213.5) node   [align=left] {$\displaystyle \times $};
+		% Text Node
+		\draw (289,326) node  [font=\large] [align=left] {$\displaystyle +$};
+		% Text Node
+		\draw (357,350) node [anchor=north west][inner sep=0.75pt]   [align=left] {Reduce};
+		% Text Node
+		\draw (212,82) node [anchor=north west][inner sep=0.75pt]   [align=left] {Flattened Matrix};
+		
+		
+	\end{tikzpicture}
+	\caption{Map and Reduce part}
+	
+\end{figure}
+
+The main part of the code for this problem is as follows. Note that the full working code is included in the zip file as \Verb+Q1.cpp+.
+
+\begin{lstlisting}[language=c++]
+	// Kernel Dimensions
+	#define KN 3
+	#define KM 3
+	
+	// Input Dimensions
+	#define IN 3
+	#define IM 3
+\end{lstlisting}
+
+
+\begin{lstlisting}[language=c++]
+	void flip(float kernel[KN][KM], float flipped_kernel[KN][KM]) {
+		for (int i = 0; i < KN; i++) {
+			for (int j = 0; j < KM; j++) {
+				flipped_kernel[i][j] = kernel[(KN - 1 - i)][(KM - 1 - j)];
+			}
+		}
+	}
+	
+	void flatten_kernel_2d(float kernel[KM][KN], float kernel_1d[KM * KN]) {
+		for (int i = 0; i < KN; i++) {
+			for (int j = 0; j < KM; j++) {
+				kernel_1d[i * KM + j] = kernel[i][j];
+			}
+		}
+	}
+\end{lstlisting}
+
+\begin{lstlisting}[language=c++]
+	void map(const float *first, const float *second, float *output, int dim) {
+		for (int i = 0; i < dim; i++) {
+			output[i] = first[i] * second[i];
+		}
+	}
+	
+	float map_reduce(float *first, float *second, int dim) {
+		float third[dim];
+		map(first, second, third, dim);
+		float temp = 0;
+		for (int i = 0; i < dim; i++) {
+			temp += third[i];
+		}
+		return temp;
+	}
+\end{lstlisting}
+
+
+\begin{lstlisting}[language=c++]
+    const int dx = KN / 2;
+	const int dy = KM / 2;
+	float intermediate[KN * KM] = {0};
+	flip(kernel, flipped_kernel_2d);
+	flatten_kernel_2d(flipped_kernel_2d, kernel_1d);
+	for (int i = 0; i < IN; i++) {
+		for (int j = 0; j < IM; j++) {
+			for (int k = 0; k < KN; k++) {
+				for (int l = 0; l < KM; l++) {
+					int x = j - dx + l;
+					int y = i - dy + k;
+					// Branchless conditional
+					intermediate[k * KM + l] = (1 & x >= 0 & x < IM & y >= 0 & y < IN) * input[y][x];
+				}
+			}
+			output[i][j] = map_reduce(intermediate, kernel_1d, KN * KM);
+		}
+	}
+\end{lstlisting}
+
+
+The code is tested with  the example from \href{{http://www.songho.ca/dsp/convolution/convolution2d_example.html}}{Example}:
+
+Input:
+
+\begin{equation}
+	\begin{array}{|c|c|c|}
+		\hline 1 & 2 & 3 \\
+		\hline 4 & 5 & 6 \\
+		\hline 7 & 8 & 9 \\
+		\hline
+	\end{array}
+\end{equation}
+
+Kernel:
+
+\begin{equation}
+	\begin{array}{|c|c|c|}
+		\hline-1 & -2 & -1 \\
+		\hline 0 & 0 & 0 \\
+		\hline 1 & 2 & 1 \\
+		\hline
+	\end{array}
+\end{equation}
+
+Result:
+
+\begin{equation}
+	\begin{array}{|c|c|c|}
+		\hline-13 & -20 & -17 \\
+		\hline-18 & -24 & -18 \\
+		\hline 13 & 20 & 17 \\
+		\hline
+	\end{array}
+\end{equation}
+
+
+
+
 \newpage
 
 \section{Question Two}
