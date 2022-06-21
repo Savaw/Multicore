@@ -234,9 +234,55 @@
 \lhead{Assignment Four}
 %%% header of pages
 
-
-
 \section{Question One}
+\begin{enumerate}[label=\alph*)]
+	\item 
+	
+	\begin{itemize}
+		\item conditional branch instructions (Divergent paths)
+		
+		\item Stalls
+		due to long latency operations
+	\end{itemize}
+
+For example, grouping threads into warps is efficient if those threads remain on the same dynamic execution path (i.e., same PC) throughout their execution. For complex applications with complicated control flow behavior, conditional branch instructions can cause threads in a warp to take different dynamic execution paths (or diverge). GPUs allow a warp to have one active PC, so these paths must execute sequentially, and therefore, the warp must execute with a fewer number of active threads than the SIMD width of the core.
+
+The other problem is stalls caused by long latency operations. The main culprit here is scheduling policies. Suppose we use a fair scheduling policy with equal priorities (like a round-robin). In that case, all warps tend to arrive at long latency operations simultaneously, and no warp can hide the latency. If we use policies that allow warps to progress at different rates,  starvation and underutilization of data locality may happen. For example, data brought to the cache by one warp is likely to be accessed by other warps, but if warps progress at very different rates, this data may be evicted from the cache when the other warp needs it.
+
+\item
+
+The Large Warp Microarchitecture idea is proposed to decrease the performance penalty caused by branch divergence. The idea is to have fewer but larger warps so that the total number of threads and SIMD width stay the same. The key benefit is that we can create sub-warps of active threads, even when we have branch divergence.
+
+The active mask of these large warps is a 2D structure, where the number of columns is equivalent to SIMD width, and the number of rows is equal to Large warp depth. Each cell indicates whether or not the corresponding thread is active. When a large warp is selected to fetch, the fetch and decode are done like the baseline model of GPU, but in parallel to this, a specialized logic tries to examine the two 2D structures and pick one active thread from each column to form a sub-warp.
+
+While the divergent code executes in a baseline core, SIMD resources will be underutilized because each warp contains fewer active threads than the SIMD width. By using large warps, inactive slots are filled with active threads in the sub-warp creation process, therefore increasing utilization and, therefore, the performance will increase. Although, in this case, we will have a smaller number of warps with respect to the baseline model.
+
+\item 
+
+The baseline GPU scheduler usually uses a round-robin scheduler which gives all warps equal priority. It is beneficial in some ways because, in this way, all warps usually arrive at a specific section of the code at the same time and, therefore, can benefit from data locality; but this could cause problems because if we have a long latency operation, all warps will stall due to these operations and GPU cannot hide these high latency operations. 
+
+The idea is to use a two-level round-robin scheduler. In this system, we put warps into fetch groups of fixed size. For example, 32 warps are put into four groups of 8. Warps in a group have the same priority, but the groups have different priorities. For example, at first, group 0 has a higher priority than group 1 and so on.
+
+Once all warps in the highest priority group are stalled due to a long latency operation, a fetch group switch occurs, giving group 1 the highest priority, group 2 the next, then 3, and then group 0, which previously had the highest priority, will now have the lowest (circular change of priorities). Prioritizing each fetch group prevents all warps from stalling; therefore, the effect of long-latency operations is alleviated, and we can get higher performance. 
+
+
+The fetch group size in this mechanism is essential. It must be big enough to keep the pipeline busy while there are no long latency operations and small enough to prevent all warps get stuck in a long latency operation . Actually, Having only one big fetch group is equivalent to the baseline round-robin model.
+
+\item 
+
+\begin{itemize}
+	\item As mentioned in the article, the combination of large-warp and two-level scheduling with a fetch group size of 1 can be problematic. In an application that has no stalls after a short warm-up period, the two-level scheduling continues to prioritize a single large warp. Actually, we can end up in a situation where no other large warps are active. This can be problematic because, in this case, for conditional branches, a large warp must wait for all sub-warps to complete before being re-fetched, and this introduces several bubbles.
+	
+	\item Another problem is hardware cost. We must change the usual register file of GPU to implement large warps. The usual register file has a single address decoder, but to allow large warps, we must add an address decoder per SIMD lane, increasing chip area and power usage. Also, in the process of creating sub-warps, some bits in the bit mask must be cleared, but this cannot be done on the actual active mask, and a copy must be created. So for a large warp with 256 threads, additional 256-bit storage is needed.
+	
+	\item Large-warp size needs careful consideration. For example, in the case of \verb+sort+ and \verb+blackjack+ applications, we can see that 256 threads performed better than 512 because, in this case, most of the threads reach the reconvergence point and wait for a few threads to continue. 
+\end{itemize}
+
+\end{enumerate}
+
+\newpage
+
+\section{Question Two}
 
 \begin{enumerate}[label=\alph*)]
 	\item 
