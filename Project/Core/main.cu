@@ -187,10 +187,9 @@ int main(int argc, char *argv[]) {
 
     cout << "DONE" << endl;
 
-    free(output_image_host);
-    free(adjusted_image_host);
-    free(input_image_host);
 
+    cudaFree(output_image_host);
+    cudaFree(adjusted_image_host);
     cudaFree(output_image_device);
     cudaFree(adjusted_image_device);
     cudaFree(input_image_device);
