@@ -14,10 +14,10 @@ class GUI(Frame):
         self.pack()
         self.path = "pic1.jpg"
 
-        self.file = Button(self, text='Browse', command=self.choose)
-        self.cuda = Button(self, text='Run Cuda', command=self.run_cuda)
-        self.load_adjusted = Button(self, text='Load Adjusted', command=self.load_adjusted)
-        self.load_edge_detected = Button(self, text='Load Edge Detected', command=self.load_edge_detected)
+        self.file = Button(self, text='Browse Image', command=self.choose)
+        self.cuda = Button(self, text='Run', command=self.run_cuda)
+        self.load_adjusted = Button(self, text='Show Adjusted Image', command=self.load_adjusted)
+        self.load_edge_detected = Button(self, text='Show Edge Detected Image', command=self.load_edge_detected)
         self.alpha = Text(self,
                           height=1,
                           width=5)
@@ -81,8 +81,6 @@ class GUI(Frame):
         path = Image.open(im).resize((1024, 768))
         self.image2 = ImageTk.PhotoImage(path)
         self.canvas.itemconfig(self.image_container, image=self.image2)
-        print("Done")
-
         print("Done")
 
 

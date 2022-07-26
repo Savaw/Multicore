@@ -109,26 +109,25 @@ int main(int argc, char *argv[]) {
                              -1, -2, -1};
 
 
-    // Moving to device
-
+    // Move to device
     size_t total_size = img_height * img_width;
     size_t total_size_bytes = total_size * sizeof(uchar);
 
-    uchar *intput_image_host = (uchar *) malloc(total_size_bytes);
+    uchar *input_image_host = (uchar *) malloc(total_size_bytes);
     uchar *output_image_host = (uchar *) malloc(total_size_bytes);
     uchar *adjusted_image_host = (uchar *) malloc(total_size_bytes);
 
-    intput_image_host = M.data;
+    input_image_host = M.data;
     output_image_host = output_M.data;
     adjusted_image_host = adjusted_M.data;
 
-    uchar *intput_image_device, *output_image_device, *adjusted_image_device;
+    uchar *input_image_device, *output_image_device, *adjusted_image_device;
 
-    cudaMalloc(&intput_image_device, total_size_bytes);
+    cudaMalloc(&input_image_device, total_size_bytes);
     cudaMalloc(&output_image_device, total_size_bytes);
     cudaMalloc(&adjusted_image_device, total_size_bytes);
 
-    cudaMemcpy(intput_image_device, intput_image_host, total_size_bytes, cudaMemcpyHostToDevice);
+    cudaMemcpy(input_image_device, input_image_host, total_size_bytes, cudaMemcpyHostToDevice);
     cudaMemcpy(output_image_device, output_image_host, total_size_bytes, cudaMemcpyHostToDevice);
     cudaMemcpy(adjusted_image_device, adjusted_image_host, total_size_bytes, cudaMemcpyHostToDevice);
 
@@ -146,7 +145,7 @@ int main(int argc, char *argv[]) {
     int numBlocks = (total_size + blockSize - 1) / blockSize;
 
     cout << "Adjusting..." << endl;
-    adjust<<<numBlocks, blockSize>>>(intput_image_device,
+    adjust<<<numBlocks, blockSize>>>(input_image_device,
                                      adjusted_image_device,
                                      alpha,
                                      beta,
@@ -162,6 +161,7 @@ int main(int argc, char *argv[]) {
     imwrite(adjust_path, adjusted_M);
 
     cout << "Applying filter ..." << endl;
+    
     cudaEventRecord(start);
     conv<<<numBlocks, blockSize>>>(adjusted_image_device, output_image_device,
                                    kernel_v_device, kernel_h_device,
@@ -169,11 +169,14 @@ int main(int argc, char *argv[]) {
                                    kernel_size);
 
 
-    // Moving to host
-    cudaEventRecord(stop);
+    
     cudaDeviceSynchronize();
+    cudaEventRecord(stop);
     cudaEventElapsedTime(&ms, start, stop);
+
     cout << "Time: " << ms << "ms" << endl;
+
+    // Moving to host
     cudaMallocHost(&output_image_host, total_size_bytes);
     cudaMemcpy(output_image_host, output_image_device, total_size_bytes, cudaMemcpyDeviceToHost);
 
@@ -183,5 +186,16 @@ int main(int argc, char *argv[]) {
     imwrite(out_path, output_M);
 
     cout << "DONE" << endl;
+
+    free(output_image_host);
+    free(adjusted_image_host);
+    free(input_image_host);
+
+    cudaFree(output_image_device);
+    cudaFree(adjusted_image_device);
+    cudaFree(input_image_device);
+    cudaFree(kernel_v_device);
+    cudaFree(kernel_h_device);
+
     return 0;
 }

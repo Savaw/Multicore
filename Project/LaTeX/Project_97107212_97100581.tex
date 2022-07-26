@@ -230,7 +230,7 @@
 In this project, we implemented an Edge Detection Filter based on Sobel Filter. The project's core is based on SIMD computations using NVIDIA CUDA. The project features both CLI and GUI. The GUI is written in Python, uses the Tkinter library, and communicates with the CUDA core, which is written in C++ using a shell.
 \newpage
 
-\section{Main Algorithm}
+\section{Implementation}
 
 Our project has two main parts. One part is adjusting the contrast and brightness of pictures, and the other part is Sobel Filter.
 
@@ -243,42 +243,138 @@ $$\alpha \times \text{pixel} + \beta$$
 In which $\alpha$ is contrast and $\beta$ is brightness. This formula needs to be applied to the whole image to change the contrast and brightness of an image. Due to the parallel nature of the task, it could be easily achieved using CUDA. Our Kernel for this task is as follows:
 
 \begin{lstlisting}[language=c++]
-	__global__
-	void adjust(uchar *input,
+__global__
+void adjust(uchar *input,
 	uchar *output,
 	float alpha,
 	float beta,
 	size_t size) {
+		/* Calculate the index of the pixel that this 
+		thread is responsible for */
 		int idx = blockDim.x * blockIdx.x + threadIdx.x;
 		
+		/* Calculate new value of the pixel*/
 		uchar pixel = input[idx];
 		int value = alpha * pixel + beta;
+
+		/* Clip value to valid range */
 		if (value > 255)
-		value = 255;
+			value = 255;
 		if (value < 0)
-		value = 0;
-		
+			value = 0;
+						
+		/* Store result */
 		output[idx] = (uchar) value;
 	}
-	
 \end{lstlisting}
-
-\subsection{Sobel Filter}
-There exist multiple filters to implement edge detection. For this project, we used Sobel Filter. To use Sobel Filter, the whole image $\mathbf{A}$ is convolved with two matrices $\left[\begin{array}{rrr}+1 & 0 & -1 \\ +2 & 0 & -2 \\ +1 & 0 & -1\end{array}\right]$ and $\left[\begin{array}{ccc}+1 & +2 & +1 \\ 0 & 0 & 0 \\ -1 & -2 & -1\end{array}\right]$. The resulting matrices are denoted with $\mathbf{G_x}$ and $\mathbf{G_y}$, respectively.
-
-Then, the gradient magnitude matrix is constructed by calculating the $\sqrt{g^2_x + g^2_y}$ for all elements of $\mathbf{G_x}$ and $\mathbf{G_y}$. The resulting matrix $G = \sqrt{G^2_x + G^2_y}$ is used to show edges of the picture.
-
- 
 
 
 \newpage
 
 
+\subsection{Sobel Filter}
+There exist multiple filters to implement edge detection. For this project, we used Sobel Filter. To use Sobel Filter, the whole image $\mathbf{A}$ is convolved with two matrices $\mathbf{G_x}$ and $\mathbf{G_y}$, which are shown below:
+
+\begin{table}[ht!]
+	\centering
+	\begin{tabular}{|c|c|c|}
+		\hline
+		+1 & 0 & -1 \\ \hline
+		+2 & 0 &  -2 \\ \hline
+		+1 & 0 & -1 \\ \hline
+	\end{tabular}
+	\cprotect\caption{$\mathbf{G_x}$}
+\end{table}
+
+\begin{table}[ht!]
+	\centering
+	\begin{tabular}{|c|c|c|}
+		\hline
+		+1 & +2 & +1 \\ \hline
+		0 & 0 &  0 \\ \hline
+		-1 & -2 & -1 \\ \hline
+	\end{tabular}
+	\cprotect\caption{$\mathbf{G_y}$}
+\end{table}
+
+Then, the gradient magnitude matrix is constructed by calculating the $\sqrt{g^2_x + g^2_y}$ for all elements of $\mathbf{G_x}$ and $\mathbf{G_y}$. The resulting matrix $G = \sqrt{G^2_x + G^2_y}$ is used to show edges of the picture.
+
+The kernel code for this part is as follows:
+
+\begin{lstlisting}[language=c++]
+__global__
+void conv(uchar *input,
+	uchar *output,
+	float *kernel_v,
+	float *kernel_h,
+	size_t rows,
+	size_t cols,
+	size_t kernel_size) {
+	/* Calculate the index of the pixel that this 
+	thread is responsible for */
+	int idx = blockDim.x * blockIdx.x + threadIdx.x;
+	int i = idx / cols;
+	int j = idx % cols;
 	
+	float sum_v = 0, sum_h = 0;
+	/* Range over kernel entries */
+	for (int kidx = 0; kidx < kernel_size * kernel_size; kidx++) {
+		int ki = kidx / kernel_size;
+		int kj = kidx % kernel_size;
+		
+		int new_i = i + ki - kernel_size / 2;
+		int new_j = j + kj - kernel_size / 2;
+		
+		/* Pass pixel if we are out of boundry */
+		if (new_i < 0 || new_i >= rows || new_j < 0 || new_j >= cols)
+			continue;
+		
+		int new_idx = new_i * cols + new_j;
+
+		/* Convolve each of horizontal and vertical filters
+		with image */		
+		sum_v += kernel_v[kidx] * (float) input[new_idx];
+		sum_h += kernel_h[kidx] * (float) input[new_idx];
+	}
 	
+	/* Calculate new value of the pixel */
+	int value = (int) sqrt(sum_v * sum_v + sum_h * sum_h);
+
+	/* Clip value to valid range */
+	if (value > 255)
+	value = 255;
+	if (value < 0)
+	value = 0;
 	
-	
+	/* Store result */
+	output[idx] = (uchar) value;
+}
+\end{lstlisting}
+
+
+\subsection{Memory Management}
+
+When calling CUDA functions, we need to ensure all arguments are stored in CUDA-accessible memory. For this reason, we used \verb+cudaMalloc+ function to allocate GPU memory and \verb+cudaMemcpy+ to copy data from host memory to device and visa-versa. Also, \verb+cudaFree+ is used to free GPU memory.
+
+An example from the code is shown below:
+
+\begin{lstlisting}[language=c++]
+/* Allocate GPU memory for input and ouput image */
+cudaMalloc(&input_image_device, total_size_bytes);
+cudaMalloc(&output_image_device, total_size_bytes);
+
+/* Copy input image to GPU memory */
+cudaMemcpy(input_image_device, input_image_host, total_size_bytes, cudaMemcpyHostToDevice);
+
+/* Do some work ... */
+
+/* Copy output image to host memory */
+cudaMemcpy(output_image_host, output_image_device, total_size_bytes, cudaMemcpyDeviceToHost);
+
+/* Free allocated memory */
+cudaFree(output_image_device);
+cudaFree(input_image_device);
+\end{lstlisting}
+
+
 \end{document}
-
-
-
