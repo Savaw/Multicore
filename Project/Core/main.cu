@@ -73,10 +73,13 @@ void conv(uchar *input,
 }
 
 int main(int argc, char *argv[]) {
-    cudaEvent_t start, stop;
-    float ms = 0;
-    cudaEventCreate(&start);
-    cudaEventCreate(&stop);
+    cudaEvent_t start1, stop1,start2,stop2;
+    float ms1 = 0,ms2=0;
+    cudaEventCreate(&start1);
+    cudaEventCreate(&stop1);
+    cudaEventCreate(&start2);
+    cudaEventCreate(&stop2);
+
 
     const char *in_path = (const char *) argv[1];
     const char *alpha_arg = (const char *) argv[2];
@@ -144,14 +147,21 @@ int main(int argc, char *argv[]) {
     int blockSize = 256;
     int numBlocks = (total_size + blockSize - 1) / blockSize;
 
-    cout << "Adjusting..." << endl;
+    cout << "Adjusting brightness and contrast..." << endl;
+    cudaEventRecord(start1);
     adjust<<<numBlocks, blockSize>>>(input_image_device,
                                      adjusted_image_device,
                                      alpha,
                                      beta,
                                      img_height * img_width);
 
+    cudaEventRecord(stop1);
     cudaDeviceSynchronize();
+    cudaEventElapsedTime(&ms1, start1, stop1);
+
+    cout << "Time of Adjustment: " << ms1 << " ms" << endl;
+
+
     cudaMallocHost(&adjusted_image_host, total_size_bytes);
     cudaMemcpy(adjusted_image_host, adjusted_image_device, total_size_bytes, cudaMemcpyDeviceToHost);
 
@@ -162,7 +172,7 @@ int main(int argc, char *argv[]) {
 
     cout << "Applying filter ..." << endl;
     
-    cudaEventRecord(start);
+    cudaEventRecord(start2);
     conv<<<numBlocks, blockSize>>>(adjusted_image_device, output_image_device,
                                    kernel_v_device, kernel_h_device,
                                    img_height, img_width,
@@ -170,11 +180,12 @@ int main(int argc, char *argv[]) {
 
 
     
+    
+    cudaEventRecord(stop2);
     cudaDeviceSynchronize();
-    cudaEventRecord(stop);
-    cudaEventElapsedTime(&ms, start, stop);
+    cudaEventElapsedTime(&ms2, start2, stop2);
 
-    cout << "Time: " << ms << "ms" << endl;
+    cout << "Time of Convolution: " << ms2 << " ms" << endl;
 
     // Moving to host
     cudaMallocHost(&output_image_host, total_size_bytes);
