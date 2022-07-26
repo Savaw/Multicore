@@ -179,7 +179,7 @@
 			\vspace{0.5cm}
 			\textbf{ \Huge{Multicore Computing} }\\
 			\vspace{0.5cm}
-			\textbf{ \Large{ Assignment Five (Practical)} }
+			\textbf{ \Large{ Assignment Four (Practical)} }
 			\vspace{0.2cm}
 			
 			
@@ -219,21 +219,18 @@
 	\section{Question Three}
 	
 	
-The code for this question is included in \Verb+cpu.cpp+, \Verb+cuda-1.cu+, and \Verb+cuda-2.cu+.
+The code for this question is included in \verb+Q3/cpu.cpp+, \verb+Q3/cuda-1.cu+, and \verb+Q3/cuda-2.cu+.
 
-The cpu.cpp part uses only CPU instructions and does not use CUDA. The other two both use CUDA. the First one initializes the kernel with parameters \verb+<<<1,1>>>+, but the second one uses
+The \verb+cpu.cpp+ part uses only CPU instructions and does not use CUDA. The other two both use CUDA. The first one initializes the kernel with parameters \verb+<<<1,1>>>+. It does not utilize the parallelization features of CUDA, and it acts as a baseline to compare the performance of the actual CUDA code (\verb+cuda-2.cu+). The \verb+cuda-2.cu+ uses
 
 \begin{lstlisting}[language=c++]
-	
 	int blockSize = 256;
 	int numBlocks = (total_size + blockSize - 1) / blockSize;
-	
 \end{lstlisting}
 
 and calls the kernel with \verb+<<<numBlocsk,blockSize>>>+.
 
 All the codes measure the run time of code and output them in stdout.
-
 
 The code's main logic is to subtract each pixel's value from $255$. Therefore the main kernel will be as follows:
 
@@ -242,7 +239,7 @@ The code's main logic is to subtract each pixel's value from $255$. Therefore th
 	void invert(uchar *image, uchar *inverted_image, size_t total_size) {
 		int pixel = blockDim.x * blockIdx.x + threadIdx.x;
 		if (pixel < total_size)
-		inverted_image[pixel] = 255 - image[pixel];
+			inverted_image[pixel] = 255 - image[pixel];
 	}
 \end{lstlisting}
 
@@ -268,6 +265,115 @@ You can see the original picture and its inverted result below:
 
 \section{Question Four}
 
+
+\subsection{Green Screen Effect}
+
+
+The code for this part of question is included in \verb+Q4/cuda-1.cu+, and \verb+Q4/cuda-2.cu+.
+
+The \verb+bmp.c+ file, which was provided for previous practical homework, is used for loading and storing BMP images.
+ 
+Similar to previous question, The \verb+cuda-1.cu+ one initializes the kernel with parameters \verb+<<<1,1>>>+. It does not utilize the parallelization features of CUDA, and it acts as a baseline to compare performance of the actual CUDA code (\verb+cuda-2.cu+). The \verb+cuda-2.cu+ uses
+
+\begin{lstlisting}[language=c++]
+int blockSize = 256;
+int numBlocks = (total_size + blockSize - 1) / blockSize;
+\end{lstlisting}
+
+and calls the kernel with \verb+<<<numBlocsk,blockSize>>>+.
+
+All the codes measure the run time of code and output them in stdout.
+
+The code's main logic to apply green screen effect is to replace all green pixels of foreground image with background image. To be able to call \verb+is_green+ function from CUDA, we need to mark it as a \verb+__device__+ function.
+
+The kernel code for replacing pixels is as follows :
+
+\begin{lstlisting}[language=c++]
+__global__
+void replace(byte *pixels_top,
+				byte *pixels_bg,
+				int width,
+				int height,
+				int bytesPerPixel) {
+	int start = blockDim.x * blockIdx.x + threadIdx.x;
+	int idx = start * bytesPerPixel;
+	if (is_green(pixels_top[idx],
+		pixels_top[idx + 1],
+		pixels_top[idx + 2])) {
+			pixels_top[idx] = pixels_bg[idx];
+			pixels_top[idx + 1] = pixels_bg[idx + 1];
+			pixels_top[idx + 2] = pixels_bg[idx + 2];
+	}
+}
+\end{lstlisting}
+
+The result is shown below:
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.6\textwidth]{./images/Q4/replaced.bmp}	
+	\cprotect\caption{Replaced Image}
+	\label{fig:3-1}
+\end{figure}
+
+\subsection{Sharpening}
+
+The code for this part of question is included in \verb+Q4/cuda-sharpen.cu+.
+
+In this part, we applied a sharpening filter to image with following values for each pixel:
+
+\begin{table}[ht!]
+	\centering
+	\begin{tabular}{|c|c|c|}
+		\hline
+		0 & -1/2 & 0 \\ \hline
+		 -1/2 & 3 &  -1/2 \\ \hline
+		0 &  -1/2 & 0 \\ \hline
+	\end{tabular}
+\end{table}
+
+The kernel code for appling convolution is as follows (Some details omitted.):
+
+\begin{lstlisting}[language=c++]
+__global__
+void conv(byte *input,
+			byte *output,
+			float *kernel,
+			size_t rows,
+			size_t cols,
+			int bytesPerPixel,
+			size_t kernel_size) {
+	
+	int idx = blockDim.x * blockIdx.x + threadIdx.x;
+	int i = idx / cols;
+	int j = idx % cols;
+	
+	for (int rgb = 0; rgb < 3; rgb++) {
+		float sum = 0;
+		for (int kidx = 0; kidx < kernel_size * kernel_size; kidx++) {
+			int ki = kidx / kernel_size;
+			int kj = kidx % kernel_size;
+			
+			int new_i = i + ki - kernel_size / 2;
+			int new_j = j + kj - kernel_size / 2;
+		
+			int new_idx = new_i * cols + new_j;
+			sum += kernel[kidx] * (float) input[new_idx * bytesPerPixel + rgb];
+		}
+	
+	output[idx * bytesPerPixel + rgb] = (byte) sum;
+	}
+}
+\end{lstlisting}
+
+The result is shown below:
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.6\textwidth]{./images/Q4/sharpened.bmp}	
+	\cprotect\caption{Replaced and Sharpened Image}
+	\label{fig:3-2}
+\end{figure}
 
 
 \newpage

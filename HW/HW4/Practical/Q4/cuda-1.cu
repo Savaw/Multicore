@@ -36,12 +36,13 @@ void replace(byte *pixels_top,
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
             int start = i * width + j;
-            if (is_green(pixels_top[start * bytesPerPixel],
-                         pixels_top[start * bytesPerPixel + 1],
-                         pixels_top[start * bytesPerPixel + 2])) {
-                pixels_top[start * bytesPerPixel] = pixels_bg[start * bytesPerPixel];
-                pixels_top[start * bytesPerPixel + 1] = pixels_bg[start * bytesPerPixel + 1];
-                pixels_top[start * bytesPerPixel + 2] = pixels_bg[start * bytesPerPixel + 2];
+            int idx = start * bytesPerPixel;
+            if (is_green(pixels_top[idx],
+                         pixels_top[idx + 1],
+                         pixels_top[idx + 2])) {
+                pixels_top[idx] = pixels_bg[idx];
+                pixels_top[idx + 1] = pixels_bg[idx + 1];
+                pixels_top[idx + 2] = pixels_bg[idx + 2];
             }
         }
     }
