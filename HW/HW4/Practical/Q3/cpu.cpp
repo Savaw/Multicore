@@ -1,7 +1,9 @@
-
 #include <iostream>
 #include <math.h>
 #include <string>
+#include <chrono>
+
+
 
 #include "opencv2/shape.hpp"
 #include "opencv2/imgcodecs.hpp"
@@ -11,6 +13,7 @@
 
 using namespace std;
 using namespace cv;
+
 
 void invert(Mat M)
 {
@@ -31,8 +34,11 @@ int main(void)
   string in_path = "pics/pic1.jpg";
   string out_path = "out.jpg";
   Mat M = imread(in_path);
-
+  auto start = std::chrono::high_resolution_clock::now();
   invert(M);
+  auto stop =  std::chrono::high_resolution_clock::now();
+  auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+    cout << "Time: " << duration.count() << "ms" << endl;
   imwrite(out_path, M);
   return 0;
 }

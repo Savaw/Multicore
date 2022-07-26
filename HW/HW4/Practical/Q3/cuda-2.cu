@@ -12,67 +12,69 @@ using namespace std;
 using namespace cv;
 
 __global__
-void invert(uchar *image, uchar *inverted_image, size_t total_size)
-{
-  int pixel = blockDim.x * blockIdx.x + threadIdx.x;
-  if (pixel < total_size)
-    inverted_image[pixel] = 255 - image[pixel];
+void invert(uchar *image, uchar *inverted_image, size_t total_size) {
+    int pixel = blockDim.x * blockIdx.x + threadIdx.x;
+    if (pixel < total_size)
+        inverted_image[pixel] = 255 - image[pixel];
 }
 
 
-int main(void)
-{
-  cudaEvent_t start, stop;
-  float ms = 0;
+int main(void) {
+    cudaEvent_t start, stop;
+    float ms = 0;
 
-  cudaEventCreate (&start);
-  cudaEventCreate (&stop);
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
 
-  string in_path = "pics/pic3.jpg";
-  string out_path = "out.jpg";
+    string in_path = "pics/pic3.jpg";
+    string out_path = "out.jpg";
 
-  cout<< "Reading image..." << endl;
-  Mat M = imread(in_path); 
-  Size imgsize = M.size();
+    cout << "Reading image..." << endl;
+    Mat M = imread(in_path);
+    Size imgsize = M.size();
 
-  Mat inverted_M(M.size(), M.type(), Scalar(0,0,0));
+    Mat inverted_M(M.size(), M.type(), Scalar(0, 0, 0));
 
-  size_t total_size = imgsize.width * imgsize.height * M.channels();
-  int total_bytes = total_size * sizeof(uchar);
+    size_t total_size = imgsize.width * imgsize.height * M.channels();
+    int total_bytes = total_size * sizeof(uchar);
 
-  uchar* image_host = M.data;
-	uchar* inverted_image_host = inverted_M.data;
+    uchar *image_host = M.data;
+    uchar *inverted_image_host = inverted_M.data;
 
-  uchar *image, *inverted_image;
-  
-  cudaMalloc(&image, total_bytes);
-  cudaMalloc(&inverted_image, total_bytes);
+    uchar *image, *inverted_image;
 
-  cudaMemcpy(image, image_host, total_bytes, cudaMemcpyHostToDevice);
-  cudaMemcpy(inverted_image, inverted_image_host, total_bytes, cudaMemcpyHostToDevice); 
-  
-  cout<< "inverting..." << endl;
+    cudaMalloc(&image, total_bytes);
+    cudaMalloc(&inverted_image, total_bytes);
 
-  int blockSize = 256;
-  int numBlocks = (total_size + blockSize - 1) / blockSize;
-  cudaEventRecord(start);
-  invert<<<numBlocks, blockSize>>>(image, inverted_image, total_size);
-  cudaEventRecord(stop);
-  cudaDeviceSynchronize();
-  cudaEventElapsedTime(&ms, start, stop);
-  cout<<"Time: "<<ms<<"ms"<<endl;
+    cudaMemcpy(image, image_host, total_bytes, cudaMemcpyHostToDevice);
+    cudaMemcpy(inverted_image, inverted_image_host, total_bytes, cudaMemcpyHostToDevice);
 
-  cudaMemcpy(image_host, image, total_bytes, cudaMemcpyDeviceToHost);
-  cudaMemcpy(inverted_image_host, inverted_image, total_bytes, cudaMemcpyDeviceToHost);
+    cout << "inverting..." << endl;
 
-  inverted_M = Mat(imgsize, M.type(), inverted_image_host);
+    int blockSize = 256;
+    int numBlocks = (total_size + blockSize - 1) / blockSize;
 
-  cout<< "Writing image..." << endl;  
-  imwrite(out_path, inverted_M);
+    cudaEventRecord(start);
+    invert<<<numBlocks, blockSize>>>(image, inverted_image, total_size);
+    cudaEventRecord(stop);
 
-  cudaFree(image);
-  cudaFree(inverted_image);
-  
-  cout<< "DONE" << endl;
-  return 0;
+    cudaDeviceSynchronize();
+
+    cudaEventElapsedTime(&ms, start, stop);
+    cout << "Time: " << ms << "ms" << endl;
+
+
+    cudaMallocHost(&inverted_image_host, total_bytes);
+    cudaMemcpy(inverted_image_host, inverted_image, total_bytes, cudaMemcpyDeviceToHost);
+
+    inverted_M = Mat(imgsize, M.type(), inverted_image_host);
+
+    cout << "Writing image..." << endl;
+    imwrite(out_path, inverted_M);
+
+    cudaFree(image);
+    cudaFree(inverted_image);
+
+    cout << "DONE" << endl;
+    return 0;
 }
