@@ -8,58 +8,75 @@ class GUI(Frame):
 
     def __init__(self, master=None):
         Frame.__init__(self, master)
-        w, h = 1280, 720
+        self.winfo_toplevel().title("Edge Detector")
+
+        w, h = 1280, 800
         master.minsize(width=w, height=h)
         master.maxsize(width=w, height=h)
 
         self.pack()
-        self.path = "pic1.jpg"
+        self.path = "default.jpg"
 
-        self.file = Button(self, text='Browse Image', command=self.choose)
-        self.cuda = Button(self, text='Run', command=self.run_cuda)
-        self.load_adjusted = Button(self, text='Show Adjusted Image', command=self.load_adjusted)
-        self.load_edge_detected = Button(self, text='Show Edge Detected Image', command=self.load_edge_detected)
+        ### Menu
+        menu_sub_frame = Frame(self)
+        self.file = Button(menu_sub_frame, text='Browse Image', command=self.choose)
+        self.cuda = Button(menu_sub_frame, text='Run', command=self.run_cuda)
+        self.load_adjusted = Button(menu_sub_frame, text='Show Adjusted Image', command=self.load_adjusted)
+        self.load_edge_detected = Button(menu_sub_frame, text='Show Edge Detected Image', command=self.load_edge_detected)
         
-        
-        alpha_sub = Frame(self)
-        self.alpha_label = Label(alpha_sub, text="Contrast")
-        self.alpha_slider = Scale(alpha_sub, from_=0, to=100, length=150, orient=HORIZONTAL)
+        alpha_sub_frame = Frame(menu_sub_frame)
+        self.alpha_label = Label(alpha_sub_frame, text="Contrast")
+        self.alpha_slider = Scale(alpha_sub_frame, from_=0, to=100, length=150, orient=HORIZONTAL)
         self.alpha_slider.set(50)
+        self.alpha_label.pack(side=BOTTOM)
+        self.alpha_slider.pack(side=BOTTOM)
         
-        beta_sub = Frame(self)
-        self.beta_label = Label(beta_sub, text="Brightness")
-        self.beta_slider = Scale(beta_sub, from_=0, to=100, length=150, orient=HORIZONTAL)
-        self.beta_slider.set(50)
 
-        # Replace with your image
-        img = Image.open("pic1.jpg").resize((1024, 768))
-        self.image = ImageTk.PhotoImage(img)
-        self.canvas = Canvas(root, width=1024, height=768)
-        self.image_container = self.canvas.create_image(0, 0, image=self.image, anchor=NW)
-        self.canvas.pack(side=BOTTOM)
+        beta_sub_frame = Frame(menu_sub_frame)
+        self.beta_label = Label(beta_sub_frame, text="Brightness")
+        self.beta_slider = Scale(beta_sub_frame, from_=0, to=100, length=150, orient=HORIZONTAL)
+        self.beta_slider.set(50)
+        self.beta_label.pack(side=BOTTOM)
+        self.beta_slider.pack(side=BOTTOM)
+
 
         self.file.pack(side=LEFT)
         self.cuda.pack(side=LEFT)
         self.load_adjusted.pack(side=LEFT)
         self.load_edge_detected.pack(side=LEFT)
-        alpha_sub.pack(side=LEFT, padx=10)
-        beta_sub.pack(side=LEFT, padx=10)
+        alpha_sub_frame.pack(side=LEFT, padx=10)
+        beta_sub_frame.pack(side=LEFT, padx=10)
+        
+        ### Canvas
+        self.canvas_width = 1024
+        self.canvas_height = 700
+
+        canvas_sub_frame = Frame(self)
+        img = Image.open(self.path)
+        img = self.fit_image_to_canves(img)
+        self.image = ImageTk.PhotoImage(img)
+        self.canvas = Canvas(canvas_sub_frame, width=self.canvas_width, height=self.canvas_height)
+        self.image_container = self.canvas.create_image(self.canvas_width/2, 
+                                                        self.canvas_height/2, 
+                                                        image=self.image, 
+                                                        anchor=CENTER)
+        self.canvas.pack(side=TOP)
 
         
-        self.alpha_label.pack(side=BOTTOM)
-        self.alpha_slider.pack(side=BOTTOM)
+        ### Root Frame
         
-        self.beta_label.pack(side=BOTTOM)
-        self.beta_slider.pack(side=BOTTOM)
-        
+        canvas_sub_frame.pack(side=TOP)
+        menu_sub_frame.pack(side=BOTTOM)
+
 
     def choose(self):
         try:
             ifile = filedialog.askopenfile(parent=self, mode='rb', title='Choose a file')
-            path = Image.open(ifile).resize((1024, 768))
+            img = Image.open(ifile)
+            img = self.fit_image_to_canves(img)
             self.path = ifile.name
 
-            self.image2 = ImageTk.PhotoImage(path)
+            self.image2 = ImageTk.PhotoImage(img)
             self.canvas.itemconfig(self.image_container, image=self.image2)
         except:
             pass
@@ -78,8 +95,8 @@ class GUI(Frame):
         print("Loading Adjusted")
         self.path = "./sobel-out-adjust.jpg"
         im = open(self.path, "rb")
-        path = Image.open(im).resize((1024, 768))
-        self.image2 = ImageTk.PhotoImage(path)
+        img = self.fit_image_to_canves(Image.open(im))
+        self.image2 = ImageTk.PhotoImage(img)
         self.canvas.itemconfig(self.image_container, image=self.image2)
         print("Done")
 
@@ -87,8 +104,8 @@ class GUI(Frame):
         print("Loading Edge Detected")
         self.path = "./sobel-out.jpg"
         im = open(self.path, "rb")
-        path = Image.open(im).resize((1024, 768))
-        self.image2 = ImageTk.PhotoImage(path)
+        img = self.fit_image_to_canves(Image.open(im))
+        self.image2 = ImageTk.PhotoImage(img)
         self.canvas.itemconfig(self.image_container, image=self.image2)
         print("Done")
 
@@ -114,6 +131,21 @@ class GUI(Frame):
 
         return beta
 
+    def fit_image_to_canves(self, img):
+        img_width = img.size[0] * 1.0
+        img_height = img.size[1] * 1.0
+        ratio = img_width / img_height
+
+        if img_height > self.canvas_height:
+            img_height = self.canvas_height
+            img_width = ratio * img_height
+        
+        if img_width > self.canvas_width:
+            img_width = self.canvas_width
+            img_height = img_width / ratio
+        
+        return img.resize((int(img_width), int(img_height)))
+        
 
 root = Tk()
 
