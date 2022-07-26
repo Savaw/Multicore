@@ -17,6 +17,8 @@
 *.cb2
 .*.lb
 
+!Project/GUI/main.out
+
 ## Intermediate documents:
 *.dvi
 *.xdv
