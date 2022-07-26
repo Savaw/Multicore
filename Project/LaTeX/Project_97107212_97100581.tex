@@ -376,5 +376,71 @@ cudaFree(output_image_device);
 cudaFree(input_image_device);
 \end{lstlisting}
 
+\newpage 
+\section{Results}
+
+To compare the speedup from switching to GPU, we tested five different images (included in \Verb+benchmark+ folder in \Verb+core+). The dimensions of these five images are \Verb+1920x1080+ (Full HD), \Verb+1920x1200+, \Verb+1920x1440+, \Verb+3840x2160+ (4K), \Verb+7680x4320+ (8K). As our code includes two parts, namely "Brightness and Contrast Adjustment" and "Sobel Edge Filter," we recorded the timing details of each of these parts separately. We plotted different graphs for each part and the total time of running these parts. Note that the time needed to load the picture using OpenCV and write it to the file is not included in the data.
+
+For the GPU implementation part, we measured time for three different block sizes, "256", "64", and "16".
+
+It is noteworthy that because the runtime of CPU implementation is orders of magnitude higher than GPU code, we plotted two different plots for each part; one includes CPU timings, and the other just includes GPU timing have better resolution.
+
+Also, the values for Brightness and Contrast adjustment in all runs are $\alpha = 0.8, \beta=50$.
+
+You can view the results in the charts below:
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{./images/BCA.png}	
+	\cprotect\caption{Brightness and Contrast Adjustment Benchmark (Including CPU)}
+	\label{fig:1}
+\end{figure}
+
+
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{./images/BCA2.png}	
+	\cprotect\caption{Brightness and Contrast Adjustment Benchmark (Without CPU)}
+	\label{fig:2}
+\end{figure}
+
+
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{./images/Convolution.png}	
+	\cprotect\caption{Sobel Edge Detection Filter Convolution Benchmark  (Including CPU)}
+	\label{fig:3}
+\end{figure}
+
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{./images/Convolution2.png}	
+	\cprotect\caption{Sobel Edge Detection Filter Convolution Benchmark  (Without CPU)}
+	\label{fig:4}
+\end{figure}
+
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{./images/Total.png}	
+	\cprotect\caption{Total Runtime Benchmark  (Including CPU)}
+	\label{fig:5}
+\end{figure}
+
+
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.8\textwidth]{./images/Total2.png}	
+	\cprotect\caption{Total Runtime Benchmark  (Without CPU)}
+	\label{fig:6}
+\end{figure}
+
+As evident from the plots, we gain a huge exponential speedup by using GPU and CUDA. Also, in most cases, "256 threads per block" was the best option. While, in most cases, the difference between 256 and 64 is minor, the difference between 16 and 256 is substantial.
+
+
 
 \end{document}
