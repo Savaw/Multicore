@@ -2,7 +2,7 @@ from tkinter import *
 from tkinter import filedialog
 from PIL import Image, ImageTk
 import os
-
+import math
 
 class GUI(Frame):
 
@@ -11,6 +11,7 @@ class GUI(Frame):
         w, h = 1280, 720
         master.minsize(width=w, height=h)
         master.maxsize(width=w, height=h)
+
         self.pack()
         self.path = "pic1.jpg"
 
@@ -18,17 +19,18 @@ class GUI(Frame):
         self.cuda = Button(self, text='Run', command=self.run_cuda)
         self.load_adjusted = Button(self, text='Show Adjusted Image', command=self.load_adjusted)
         self.load_edge_detected = Button(self, text='Show Edge Detected Image', command=self.load_edge_detected)
-        self.alpha = Text(self,
-                          height=1,
-                          width=5)
-        self.alpha_label = Label(self, text="Alpha")
-        self.beta_label = Label(self, text="Beta")
-        self.alpha.insert(END, "1")
+        
+        
+        alpha_sub = Frame(self)
+        self.alpha_label = Label(alpha_sub, text="Contrast")
+        self.alpha_slider = Scale(alpha_sub, from_=0, to=100, length=150, orient=HORIZONTAL)
+        self.alpha_slider.set(50)
+        
+        beta_sub = Frame(self)
+        self.beta_label = Label(beta_sub, text="Brightness")
+        self.beta_slider = Scale(beta_sub, from_=0, to=100, length=150, orient=HORIZONTAL)
+        self.beta_slider.set(50)
 
-        self.beta = Text(self,
-                         height=1,
-                         width=5)
-        self.beta.insert(END, "0")
         # Replace with your image
         img = Image.open("pic1.jpg").resize((1024, 768))
         self.image = ImageTk.PhotoImage(img)
@@ -40,10 +42,16 @@ class GUI(Frame):
         self.cuda.pack(side=LEFT)
         self.load_adjusted.pack(side=LEFT)
         self.load_edge_detected.pack(side=LEFT)
-        self.alpha_label.pack(side=LEFT)
-        self.alpha.pack(side=LEFT)
-        self.beta_label.pack(side=LEFT)
-        self.beta.pack(side=LEFT)
+        alpha_sub.pack(side=LEFT, padx=10)
+        beta_sub.pack(side=LEFT, padx=10)
+
+        
+        self.alpha_label.pack(side=BOTTOM)
+        self.alpha_slider.pack(side=BOTTOM)
+        
+        self.beta_label.pack(side=BOTTOM)
+        self.beta_slider.pack(side=BOTTOM)
+        
 
     def choose(self):
         try:
@@ -60,9 +68,10 @@ class GUI(Frame):
     def run_cuda(self):
         print("Running CUDA")
         print(self.path)
-        alpha = self.alpha.get("1.0", 'end-1c')
-        beta = self.beta.get("1.0", 'end-1c')
-        os.system("./main.out " + self.path + " " + alpha + " " + beta)
+        alpha = self.get_alpha()
+        beta = self.get_beta()
+        print(alpha, beta)
+        os.system("./main.out " + self.path + " " + str(alpha) + " " + str(beta))
         print("Done")
 
     def load_adjusted(self):
@@ -82,6 +91,28 @@ class GUI(Frame):
         self.image2 = ImageTk.PhotoImage(path)
         self.canvas.itemconfig(self.image_container, image=self.image2)
         print("Done")
+
+    def get_alpha(self):
+        raw_alpha = self.alpha_slider.get()
+
+        if raw_alpha <= 50:
+            alpha = 1.0 * (raw_alpha - 0) / (50 - 0) # [0, 1]
+            alpha = math.sqrt(alpha) 
+        else:
+            alpha = 1.0 * (raw_alpha - 50) / (100 - 50) # [0, 1]
+            alpha = 1.1 ** (alpha*30) # exponential
+            alpha += 1
+
+        return alpha
+
+    def get_beta(self):
+        raw_beta = self.beta_slider.get()
+
+        beta = 1.0 * (raw_beta - 0) / (100 - 0) # [0, 1]
+        beta *= 300 # [0, 300]
+        beta -= 150 # [-150, 150]
+
+        return beta
 
 
 root = Tk()
