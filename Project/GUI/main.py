@@ -39,6 +39,13 @@ class GUI(Frame):
         self.beta_label.pack(side=BOTTOM)
         self.beta_slider.pack(side=BOTTOM)
 
+        threshold_sub_frame = Frame(menu_sub_frame)
+        self.threshold_label = Label(threshold_sub_frame, text="Threshold")
+        self.threshold_slider = Scale(threshold_sub_frame, from_=0, to=255, length=150, orient=HORIZONTAL)
+        self.threshold_slider.set(0)
+        self.threshold_label.pack(side=BOTTOM)
+        self.threshold_slider.pack(side=BOTTOM)
+
 
         self.file.pack(side=LEFT)
         self.cuda.pack(side=LEFT)
@@ -46,6 +53,7 @@ class GUI(Frame):
         self.load_edge_detected.pack(side=LEFT)
         alpha_sub_frame.pack(side=LEFT, padx=10)
         beta_sub_frame.pack(side=LEFT, padx=10)
+        threshold_sub_frame.pack(side=LEFT, padx=10)
         
         ### Canvas
         self.canvas_width = 1024
@@ -87,8 +95,9 @@ class GUI(Frame):
         print(self.path)
         alpha = self.get_alpha()
         beta = self.get_beta()
+        thresh = self.get_threshhold()
         print(alpha, beta)
-        os.system("./main.out " + self.path + " " + str(alpha) + " " + str(beta))
+        os.system("./main.out " + self.path + " " + str(alpha) + " " + str(beta) + " " + str(thresh))
         print("Done")
 
     def load_adjusted(self):
@@ -130,6 +139,10 @@ class GUI(Frame):
         beta -= 150 # [-150, 150]
 
         return beta
+
+    def get_threshhold(self):
+        raw_thresh = self.threshold_slider.get()
+        return raw_thresh
 
     def fit_image_to_canves(self, img):
         img_width = img.size[0] * 1.0
