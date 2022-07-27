@@ -39,7 +39,8 @@ void conv(uchar *input,
           float *kernel_h,
           size_t rows,
           size_t cols,
-          size_t kernel_size) {
+          size_t kernel_size,
+          uchar threshhold) {
 
 
     int idx = blockDim.x * blockIdx.x + threadIdx.x;
@@ -69,7 +70,7 @@ void conv(uchar *input,
     if (value < 0)
         value = 0;
 
-    output[idx] = (uchar) value;
+    output[idx] = (uchar) max(value, threshhold);
 }
 
 int main(int argc, char *argv[]) {
@@ -84,9 +85,11 @@ int main(int argc, char *argv[]) {
     const char *in_path = (const char *) argv[1];
     const char *alpha_arg = (const char *) argv[2];
     const char *beta_arg = (const char *) argv[3];
+    const char *thresh = (const char *) argv[4];
 
     float alpha = atof(alpha_arg);
     float beta = atof(beta_arg);
+    uchar thresh_ = atoi(thresh);
 
     cout << "alpha: " << alpha << " beta: " << beta << endl;
 
@@ -173,10 +176,10 @@ int main(int argc, char *argv[]) {
     cout << "Applying filter ..." << endl;
     
     cudaEventRecord(start2);
-    conv<<<numBlocks, blockSize>>>(adjusted_image_device, output_image_device,
+       conv<<<numBlocks, blockSize>>>(adjusted_image_device, output_image_device,
                                    kernel_v_device, kernel_h_device,
                                    img_height, img_width,
-                                   kernel_size);
+                                   kernel_size, thresh_);
 
 
     
