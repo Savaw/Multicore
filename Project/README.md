@@ -18,11 +18,15 @@ python GUI/main.py
 
 ### CLI
 
-Compile `main.cu` in `Core`.
+Compile `main.cu` in `Core`:
+
+```
+nvcc main.cu `pkg-config opencv --cflags --libs` -o main.out
+```
 
 Run:
 ```bash
-    ./main [image_path] [alpha] [beta] [thresh]
+./main.out [image_path] [alpha] [beta] [thresh]
 ```
 
 - *alpha*: Desired Contrast Value
