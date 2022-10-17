@@ -31,4 +31,5 @@ Run:
 
 ## Demo
 
-![DEMO VIDEO](demo.mp4)
+[Demo](https://user-images.githubusercontent.com/45356628/196235033-e5e92e9c-4ef4-42f5-8f64-a8521b30edbe.mp4)
+
